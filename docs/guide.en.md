@@ -1,6 +1,8 @@
 # nopCommerce payment plugin
 
-Lunixi Payments 0.1.1 implements nopCommerce's native `IPaymentMethod` contract. It targets the **4.90 API line**, with build and native database verification against **4.90.8** and .NET 9. It uses the shared [.NET SDK](https://docs.lunixi.com/en/sdks/dotnet) for request signing, authentication, payment transport and webhook verification.
+The existing Lunixi form opens **on the merchant website by default**. Hosted checkout remains optional and uses only the validated backend `paymentPageUrl`. Its opaque token can differ from the embedded token; the module never builds this URL from that token. Missing or legacy URLs keep embedded checkout available; hosted checkout stays on hold/reconciliation without a new intent or key. Existing attempts keep their saved mode, request body, profile and key. The official form/panel controls available methods and multi-card options.
+
+Lunixi Payments 0.1.2 implements nopCommerce's native `IPaymentMethod` contract. It targets the **4.90 API line**, with build and native database verification against **4.90.8** and .NET 9. It uses the shared [.NET SDK](https://docs.lunixi.com/en/sdks/dotnet) for request signing, authentication, payment transport and webhook verification.
 
 Source: [Lunixi-Payment/lunixi-nopcommerce](https://github.com/Lunixi-Payment/lunixi-nopcommerce). Source availability does not imply a nopCommerce Marketplace listing or NuGet.org publication.
 
@@ -15,7 +17,7 @@ python3 scripts/build.py --restore
 
 Bootstrap fetches checksum-pinned official nopCommerce 4.90.8 references. A trusted existing NoSource directory can be supplied with `--nop-runtime`. The default shared-SDK input is the `lunixi-dotnet` v0.1.0 GitHub source tag; specify `--sdk-source` while that tag is unavailable, or `--sdk-package` for an explicit local `Lunixi.Sdk.0.1.0.nupkg`. This build does not pretend an unpublished registry package exists.
 
-Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.1.zip` with a SHA-256 file. It contains one native `Payments.Lunixi` directory, the plugin, views/assets and a private SDK vendor context. Platform assemblies are not redistributed.
+Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip` with a SHA-256 file. It contains one native `Payments.Lunixi` directory, the plugin, views/assets and a private SDK vendor context. Platform assemblies are not redistributed.
 
 Upload from **Configuration → Local plugins → Upload plugin or theme**, restart as requested by nopCommerce, then install **Lunixi Payments**. Finally activate it under **Configuration → Payment methods**.
 
@@ -29,7 +31,7 @@ Before enabling payments, generate a random 32-byte server key, encode it in bas
 | Merchant SECRET key identifier | Server API key; determines TEST/LIVE |
 | Ed25519 PKCS#8 PEM private key | Signing; stays server-side |
 | Webhook signing secret | Raw-body v2 webhook verification |
-| Redirect to pay.lunixi.com | Enabled: hosted form; disabled: embedded shared form |
+| Optional hosted checkout | Disabled by default: embed the existing form on this site. Enable to use the validated backend paymentPageUrl. |
 | Authorize now, capture later | Hold funds until a native capture operation |
 
 Secret fields are blank when settings are displayed; leave them blank to preserve values. Secrets and browser tokens are encrypted. Changed credentials create immutable profiles so previous payments can still reconcile and refund. Changing only display/authorization options does not create a new credential profile. Existing attempts retain their original request body and display mode.
@@ -38,7 +40,7 @@ The gateway origin is fixed to `https://api-gateway.lunixi.com`; TEST/LIVE comes
 
 ## Hosted and embedded forms
 
-Hosted mode sends the buyer to `https://pay.lunixi.com/payment/<token>`. Embedded mode loads the fixed official `https://cdn.lunixi.com/lunixi-checkout.min.js` bundle and mounts the existing form. The plugin does not recreate card fields, render gateway HTML or collect raw card data.
+Hosted mode sends the buyer to `paymentPageUrl`. Embedded mode loads the fixed official `https://cdn.lunixi.com/lunixi-checkout.min.js` bundle and mounts the existing form. The plugin does not recreate card fields, render gateway HTML or collect raw card data.
 
 Available methods, installments, insurance and split eligibility are managed in the **Lunixi panel**. There are no duplicate method filters in the plugin. Buyer/address prefill comes from trusted native order records; incomplete optional addresses are omitted rather than fabricated. The native customer language selects Turkish or English form locale.
 
@@ -73,7 +75,7 @@ nopCommerce applies its financial result after the payment method returns. The p
 
 ## Retention and compatibility limits
 
-Uninstall disables the task and preserves financial attempts, operations, inbox, settings and encrypted profiles. Keep the server key and required merchant credentials until refund/dispute retention ends. Recurring payments are not implemented in 0.1.1. Older nopCommerce lines and 5.00 beta are not claimed compatible.
+Uninstall disables the task and preserves financial attempts, operations, inbox, settings and encrypted profiles. Keep the server key and required merchant credentials until refund/dispute retention ends. Recurring payments are not implemented in 0.1.2. Older nopCommerce lines and 5.00 beta are not claimed compatible.
 
 Native database acceptance uses real MariaDB 11/InnoDB and official mappings, repositories, `OrderService` and `OrderProcessingService`. Ambient transaction enlistment is required; MySQL financial/order/note/queued-email tables must be InnoDB and are checked. SQL Server/PostgreSQL dialects are implemented but local native acceptance has not been executed for them; validate those deployments in staging. External third-party event consumers must queue effects durably rather than acting on an uncommitted transaction.
 

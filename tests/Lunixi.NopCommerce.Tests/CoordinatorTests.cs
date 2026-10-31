@@ -34,7 +34,62 @@ public sealed class CoordinatorTests
         Assert.Equal(2, host.Gateway.CreateKeys.Count); Assert.Single(host.Gateway.CreateKeys.Distinct());
         var encrypted = await host.Database.Ledger.GetProfileAsync(host.Config.ActiveProfileId);
         Assert.DoesNotContain("PRIVATE KEY", encrypted!.Value.Cipher); Assert.DoesNotContain("synthetic-webhook-secret", encrypted.Value.Cipher);
-        Assert.Equal("https://pay.lunixi.com/payment/synthetic-checkout-token", page.HostedUrl);
+        Assert.Equal("https://pay.lunixi.com/payment/separate-hosted-token-12345", page.HostedUrl);
+    }
+
+    [Fact]
+    public async Task EmbeddedIsDefaultAndBackendUrlIsEncryptedWithoutChangingBrowserToken()
+    {
+        Assert.False(new Nop.Plugin.Payments.Lunixi.LunixiSettings().Hosted);
+        Assert.False(new Nop.Plugin.Payments.Lunixi.Models.ConfigurationModel().Hosted);
+        var host = new CoordinatorHost(); await host.Initialize();
+        var page = await host.Start(); Assert.False(page.Hosted);
+        Assert.Equal("synthetic-checkout-token", page.Token);
+        Assert.Equal(host.Gateway.PaymentPageUrl, page.HostedUrl);
+        var attempt = (await host.Database.Ledger.GetActiveAsync(host.Order.Id))!;
+        Assert.DoesNotContain("separate-hosted-token", attempt.TokenCipher!);
+        var payload = host.Profiles.Decrypt(attempt.PayloadCipher, "intent:" + attempt.OperationKey);
+        Assert.DoesNotContain("allowedOrigin", payload);
+        host.Config.Hosted = true;
+        var resumed = await host.Start(); Assert.False(resumed.Hosted);
+        Assert.Equal(page.HostedUrl, resumed.HostedUrl); Assert.Single(host.Gateway.CreateKeys);
+        Assert.Equal(attempt.OperationKey, (await host.Database.Ledger.GetActiveAsync(host.Order.Id))!.OperationKey);
+    }
+
+    [Fact]
+    public async Task MissingBackendUrlKeepsEmbeddedAndLegacyStateUsableButHostedFailsClosed()
+    {
+        var host = new CoordinatorHost(); host.Gateway.PaymentPageUrl = null; await host.Initialize();
+        var page = await host.Start(); Assert.False(page.Hosted); Assert.Equal("synthetic-checkout-token", page.Token);
+        Assert.Throws<PaymentReviewException>(() => page.HostedUrl);
+        var attempt = (await host.Database.Ledger.GetActiveAsync(host.Order.Id))!;
+        await host.Database.Ledger.WithOrderAsync(host.Order.Id, async () =>
+        {
+            await host.Database.Ledger.BindPaymentAsync(attempt, attempt.PaymentId!, host.Profiles.Encrypt("legacy-browser-token", "token:" + attempt.OperationKey)); return true;
+        });
+        var legacy = await host.Coordinator.PageAsync(host.Order.Id, 7, 1);
+        Assert.Equal("legacy-browser-token", legacy.Token); Assert.Throws<PaymentReviewException>(() => legacy.HostedUrl);
+        Assert.Single(host.Gateway.CreateKeys);
+    }
+
+    [Fact]
+    public async Task OptionalHostedUsesBackendUrlAndMissingUrlNeverCreatesAnotherIntent()
+    {
+        var host = new CoordinatorHost(); host.Config.Hosted = true; host.Gateway.PaymentPageUrl = null; await host.Initialize();
+        var first = await host.Start(); Assert.True(first.Hosted); Assert.Throws<PaymentReviewException>(() => first.HostedUrl);
+        var again = await host.Start(); Assert.Throws<PaymentReviewException>(() => again.HostedUrl); Assert.Single(host.Gateway.CreateKeys);
+    }
+
+    [Fact]
+    public async Task MalformedBackendRedirectRetainsReservedKeyForSameAttemptRecovery()
+    {
+        var host = new CoordinatorHost(); host.Gateway.PaymentPageUrl = "https://evil.example/payment/opaque-hosted-token-12345"; await host.Initialize();
+        await Assert.ThrowsAsync<PaymentReviewException>(() => host.Start());
+        var original = (await host.Database.Ledger.GetActiveAsync(host.Order.Id))!; Assert.Null(original.PaymentId);
+        host.Gateway.PaymentPageUrl = "https://pay.lunixi.com/payment/recovered-hosted-token-12345";
+        var recovered = await host.Start(); Assert.Equal(host.Gateway.PaymentPageUrl, recovered.HostedUrl);
+        Assert.Equal(original.OperationKey, (await host.Database.Ledger.GetActiveAsync(host.Order.Id))!.OperationKey);
+        Assert.Equal(2, host.Gateway.CreateKeys.Count); Assert.Single(host.Gateway.CreateKeys.Distinct());
     }
 
     [Fact]
@@ -162,7 +217,7 @@ public sealed class CoordinatorTests
     [Fact]
     public async Task ExistingPaymentRetainsCurrencyAndDisplayModeAfterSettingsChange()
     {
-        var host = new CoordinatorHost(); await host.Initialize(); await host.Start();
+        var host = new CoordinatorHost(); host.Config.Hosted = true; await host.Initialize(); await host.Start();
         host.CurrentCurrency = "USD"; host.Config.Hosted = false;
         var page = await host.Coordinator.PageAsync(host.Order.Id, 7, 1); Assert.True(page.Hosted);
         await host.Coordinator.ReconcileAsync(host.Order.Id, default);

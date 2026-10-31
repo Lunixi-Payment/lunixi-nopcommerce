@@ -23,8 +23,8 @@ public sealed class CheckoutAttempt
 }
 
 public sealed record PendingOperation(int Id, int AttemptId, string Kind, long AmountMinor, long BaselineRefunded, string Key, string State, DateTime CreatedUtc);
-public sealed record CheckoutPage(string Token, string PublishableKey, bool Hosted, int OrderId)
+public sealed record CheckoutPage(string Token, string PublishableKey, bool Hosted, int OrderId, string PaymentPageUrl = "")
 {
-    public string HostedUrl => "https://pay.lunixi.com/payment/" + Uri.EscapeDataString(Token);
+    public string HostedUrl => CheckoutSecrets.RequirePageUrl(PaymentPageUrl);
     public override string ToString() => "CheckoutPage { Token = [REDACTED] }";
 }

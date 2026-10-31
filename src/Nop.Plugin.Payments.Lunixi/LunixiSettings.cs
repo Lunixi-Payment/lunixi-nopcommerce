@@ -6,6 +6,6 @@ public sealed class LunixiSettings : ISettings
 {
     public bool Enabled { get; set; }
     public string ActiveProfileId { get; set; } = "";
-    public bool Hosted { get; set; } = true;
+    public bool Hosted { get; set; }
     public bool Preauthorize { get; set; }
 }

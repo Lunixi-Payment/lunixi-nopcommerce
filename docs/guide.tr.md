@@ -1,6 +1,8 @@
 # nopCommerce ödeme eklentisi
 
-Lunixi Payments 0.1.1, nopCommerce'in native `IPaymentMethod` sözleşmesini uygular. Hedef **4.90 API ailesidir**; derleme ve native veritabanı doğrulaması **4.90.8** ve .NET 9 ile yapılmıştır. İmza, kimlik doğrulama, ödeme taşıması ve webhook doğrulaması için ortak [.NET SDK](https://docs.lunixi.com/tr/sdks/dotnet) kullanılır.
+Mevcut Lunixi formu varsayılan olarak **mağazanın kendi sitesinde açılır**. Yönlendirmeli ödeme isteğe bağlıdır ve yalnız backend’in döndürdüğü doğrulanmış `paymentPageUrl` kullanılır. Adresin opak token’ı gömülü token’dan farklı olabilir; modül adresi token’dan üretmez. Eksik/eski adres gömülü ödemeyi engellemez; yönlendirmeli ödeme yeni intent veya anahtar açmadan inceleme/uzlaştırmada kalır. Mevcut denemelerin kayıtlı modu, gövdesi, profili ve anahtarı korunur. Yöntemler ve çoklu kart mevcut Lunixi formu/panelinden yönetilir.
+
+Lunixi Payments 0.1.2, nopCommerce'in native `IPaymentMethod` sözleşmesini uygular. Hedef **4.90 API ailesidir**; derleme ve native veritabanı doğrulaması **4.90.8** ve .NET 9 ile yapılmıştır. İmza, kimlik doğrulama, ödeme taşıması ve webhook doğrulaması için ortak [.NET SDK](https://docs.lunixi.com/tr/sdks/dotnet) kullanılır.
 
 Kaynak: [Lunixi-Payment/lunixi-nopcommerce](https://github.com/Lunixi-Payment/lunixi-nopcommerce). Kaynağın bulunması, nopCommerce Marketplace veya NuGet.org yayını anlamına gelmez.
 
@@ -15,7 +17,7 @@ python3 scripts/build.py --restore
 
 Bootstrap, SHA-256 ile sabitlenmiş resmî nopCommerce 4.90.8 referanslarını alır. Güvenilir mevcut NoSource klasörü `--nop-runtime` ile verilebilir. Ortak SDK'nın varsayılan kaynağı GitHub'daki `lunixi-dotnet` v0.1.0 etiketidir; etiket henüz yoksa `--sdk-source`, açıkça sağlanan yerel `Lunixi.Sdk.0.1.0.nupkg` için `--sdk-package` kullanın. Yayımlanmamış kayıt paketi varmış gibi davranılmaz.
 
-Çıktı: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.1.zip` ve SHA-256 dosyası. Arşiv; native `Payments.Lunixi` klasörünü, eklentiyi, görünüm/varlıkları ve özel SDK yükleme bağlamını içerir. Platform DLL'leri eklentiyle yeniden dağıtılmaz.
+Çıktı: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip` ve SHA-256 dosyası. Arşiv; native `Payments.Lunixi` klasörünü, eklentiyi, görünüm/varlıkları ve özel SDK yükleme bağlamını içerir. Platform DLL'leri eklentiyle yeniden dağıtılmaz.
 
 **Configuration → Local plugins → Upload plugin or theme** üzerinden yükleyin, nopCommerce'in istediği yeniden başlatmayı yapın ve **Lunixi Payments** eklentisini kurun. Ardından **Configuration → Payment methods** altında etkinleştirin.
 
@@ -38,7 +40,7 @@ Gateway kökü `https://api-gateway.lunixi.com` olarak sabittir; TEST/LIVE anaht
 
 ## Yönlendirmeli ve gömülü form
 
-Yönlendirmeli biçim alıcıyı `https://pay.lunixi.com/payment/<token>` adresine götürür. Gömülü biçim, sabit resmî `https://cdn.lunixi.com/lunixi-checkout.min.js` paketini yükleyerek mevcut formu açar. Eklenti kart alanlarını yeniden yazmaz, gateway HTML'i basmaz ve ham kart verisi toplamaz.
+Yönlendirmeli biçim alıcıyı `paymentPageUrl` adresine götürür. Gömülü biçim, sabit resmî `https://cdn.lunixi.com/lunixi-checkout.min.js` paketini yükleyerek mevcut formu açar. Eklenti kart alanlarını yeniden yazmaz, gateway HTML'i basmaz ve ham kart verisi toplamaz.
 
 Açık yöntemler, taksit, sigorta ve parçalı ödeme uygunluğu **Lunixi panelinden** yönetilir. Eklentide aynı yöntemler için ikinci bir filtre yoktur. Alıcı/adres ön verisi güvenilir native siparişten gelir; eksik isteğe bağlı adres uydurulmak yerine gönderilmez. Siparişin müşteri dili forma Türkçe veya İngilizce aktarılır.
 
@@ -73,7 +75,7 @@ nopCommerce ödeme metodu döndükten sonra native finansal sonucu yazar. Eklent
 
 ## Saklama ve uyumluluk sınırları
 
-Kaldırma; görevi kapatır, finansal deneme/işlem/inbox/ayar ve şifreli profilleri korur. Sunucu anahtarını ve gereken merchant bilgilerini iade/itiraz süresi boyunca saklayın. 0.1.1'de tekrarlayan ödeme yoktur. Eski nopCommerce aileleri ve 5.00 beta için uyumluluk iddiası yoktur.
+Kaldırma; görevi kapatır, finansal deneme/işlem/inbox/ayar ve şifreli profilleri korur. Sunucu anahtarını ve gereken merchant bilgilerini iade/itiraz süresi boyunca saklayın. 0.1.2'de tekrarlayan ödeme yoktur. Eski nopCommerce aileleri ve 5.00 beta için uyumluluk iddiası yoktur.
 
 Native kabul testleri gerçek MariaDB 11/InnoDB ve resmî mapping, repository, `OrderService`, `OrderProcessingService` ile çalışır. Ambient transaction katılımı zorunludur; MySQL finans/sipariş/not/e-posta kuyruğu tabloları InnoDB olmalı ve denetlenir. SQL Server/PostgreSQL yolları uygulanmıştır ancak yerel native kabul testleri bu sağlayıcılarda çalıştırılmamıştır; staging doğrulaması yapın. Üçüncü taraf olay tüketicileri tamamlanmamış işlemden dış etki üretmek yerine kalıcı kuyruk kullanmalıdır.
 

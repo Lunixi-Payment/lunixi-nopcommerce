@@ -105,9 +105,15 @@ public sealed class PaymentCoordinator(PaymentLedger ledger, CredentialProfiles 
             var paymentId = PaymentEvidence.Text(response.Data, "paymentId"); var token = PaymentEvidence.Text(response.Data, "token");
             if (string.IsNullOrWhiteSpace(paymentId) || paymentId.Length > 256 || string.IsNullOrWhiteSpace(token) || token.Length > 16384 || token.Any(c => c < 0x21 || c > 0x7e) ||
                 response.Data.TryGetProperty("intentId", out _) && PaymentEvidence.Text(response.Data, "intentId") != paymentId) throw new PaymentReviewException();
+            var pageUrl = "";
+            if (response.Data.TryGetProperty("paymentPageUrl", out var backendUrl))
+            {
+                if (backendUrl.ValueKind is not (JsonValueKind.String or JsonValueKind.Null)) throw new PaymentReviewException();
+                pageUrl = CheckoutSecrets.ValidatePageUrl(backendUrl.ValueKind == JsonValueKind.Null ? null : backendUrl.GetString());
+            }
             await ledger.WithOrderAsync(orderId, async () =>
             {
-                await ledger.BindPaymentAsync(attempt, paymentId, profiles.Encrypt(token, "token:" + attempt.OperationKey)); return true;
+                await ledger.BindPaymentAsync(attempt, paymentId, profiles.Encrypt(CheckoutSecrets.Encode(token, pageUrl), "token:" + attempt.OperationKey)); return true;
             });
         }
         return await PageAsync(orderId, customerId, storeId);
@@ -123,7 +129,8 @@ public sealed class PaymentCoordinator(PaymentLedger ledger, CredentialProfiles 
         if (identity.Fingerprint != attempt.Fingerprint) throw new PaymentReviewException();
         using var request = JsonDocument.Parse(profiles.Decrypt(attempt.PayloadCipher, "intent:" + attempt.OperationKey));
         var hosted = request.RootElement.TryGetProperty("metadata", out var metadata) && PaymentEvidence.Text(metadata, "allowedOrigin") == "https://pay.lunixi.com";
-        return new(profiles.Decrypt(attempt.TokenCipher, "token:" + attempt.OperationKey), profile.Credentials.PublishableKey, hosted, orderId);
+        var secrets = CheckoutSecrets.Decode(profiles.Decrypt(attempt.TokenCipher, "token:" + attempt.OperationKey));
+        return new(secrets.Token, profile.Credentials.PublishableKey, hosted, orderId, secrets.PaymentPageUrl);
     }
 
     private async Task<Settlement> ReadSettlement(CheckoutAttempt attempt, CancellationToken cancellationToken)

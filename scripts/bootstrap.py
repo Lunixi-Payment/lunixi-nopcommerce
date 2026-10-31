@@ -25,7 +25,7 @@ def extract_safely(archive, destination):
 
 
 def download(url, destination, expected=None):
-    request = urllib.request.Request(url, headers={"User-Agent": "Lunixi-nopCommerce-build/0.1.1"})
+    request = urllib.request.Request(url, headers={"User-Agent": "Lunixi-nopCommerce-build/0.1.2"})
     with urllib.request.urlopen(request, timeout=60) as response, destination.open("wb") as output:
         shutil.copyfileobj(response, output)
     digest = hashlib.sha256(destination.read_bytes()).hexdigest()

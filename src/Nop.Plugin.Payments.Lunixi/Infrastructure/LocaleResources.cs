@@ -6,7 +6,7 @@ public static class LocaleResources
     public static readonly IReadOnlyDictionary<string, string> English = Values(
         "Enabled", "Enable Lunixi payments", "MerchantId", "Merchant ID", "KeyId", "Merchant SECRET key identifier",
         "PrivateKey", "Ed25519 private key (PKCS#8 PEM)", "WebhookSecret", "Webhook signing secret",
-        "Hosted", "Redirect to pay.lunixi.com", "Preauthorize", "Authorize now, capture later",
+        "Hosted", "Use optional hosted checkout (backend paymentPageUrl)", "Preauthorize", "Authorize now, capture later",
         "Methods", "Available methods, installments, insurance and split payments are managed in your Lunixi panel.",
         "SecretHint", "Leave secret fields blank to keep the saved values. Secrets are encrypted; previous credential profiles remain available for reconciliation and refunds.",
         "ServerKey", "Configure LUNIXI_NOP_ENCRYPTION_KEY on every application server: a backed-up base64 key containing 32 random bytes. Keep it outside the database and source repository.",
@@ -22,7 +22,7 @@ public static class LocaleResources
     public static readonly IReadOnlyDictionary<string, string> Turkish = Values(
         "Enabled", "Lunixi ödemelerini etkinleştir", "MerchantId", "Merchant kimliği", "KeyId", "Merchant SECRET anahtar kimliği",
         "PrivateKey", "Ed25519 özel anahtar (PKCS#8 PEM)", "WebhookSecret", "Webhook imza sırrı",
-        "Hosted", "pay.lunixi.com adresine yönlendir", "Preauthorize", "Şimdi provizyon al, sonra tahsil et",
+        "Hosted", "İsteğe bağlı yönlendirmeli ödeme (backend paymentPageUrl)", "Preauthorize", "Şimdi provizyon al, sonra tahsil et",
         "Methods", "Açık yöntemler, taksit, sigorta ve parçalı ödeme Lunixi panelinizden yönetilir.",
         "SecretHint", "Kayıtlı değerleri korumak için gizli alanları boş bırakın. Sırlar şifrelenir; önceki kimlik profilleri mutabakat ve iadeler için saklanır.",
         "ServerKey", "Her uygulama sunucusunda LUNIXI_NOP_ENCRYPTION_KEY tanımlayın: rastgele 32 bayt içeren, yedeklenmiş base64 anahtar. Veritabanı ve kaynak deposu dışında tutun.",

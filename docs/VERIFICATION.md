@@ -1,4 +1,4 @@
-# Verification record — 0.1.1
+# Verification record — 0.1.2
 
 Verified on macOS arm64 with .NET SDK 9.0.320/runtime 9.0.14, official nopCommerce 4.90.8 and a dedicated MariaDB 11/InnoDB TEST database. No LIVE gateway charge was made.
 
@@ -38,7 +38,7 @@ The explicit-nupkg build uses an isolated `.cache/package-mode-packages` NuGet c
 
 ## Executed results
 
-- **44 tests passed, 0 failed, 0 skipped** on the pinned native runtime and real MariaDB fixture.
+- **59 tests passed, 0 failed, 0 skipped** on the pinned native runtime and real MariaDB fixture.
 - Release artifact build: **0 warnings, 0 errors**, in both shared SDK source mode and explicit local-nupkg mode.
 - Source-mode locked restore passed; C# formatting, JavaScript syntax and Python compilation checks passed.
 - NuGet transitive vulnerability audit returned no vulnerable packages.
@@ -64,3 +64,7 @@ The source-mode bootstrap now creates the optional `.cache/nuget` directory befo
 `python3 scripts/verify-clean-restore.py --nop-runtime /trusted/native/path --sdk-source /trusted/sdk/path` copies both projects without caches/build outputs and performs a real locked restore with an initially empty NuGet package cache. CI runs this regression before native tests.
 
 Browser-return regressions cover the actual native MVC GET/POST action discovery, the narrow CSRF exception, anonymous bounded POST without dependency/order/session/gateway access, fixed same-origin 303 despite hostile fields, oversize/prefix rejection and owner-checked native GET. No callback field changes financial state.
+
+## 0.1.2 checkout correction
+
+New configuration defaults to the existing merchant-site Lunixi form; optional hosted mode uses only the validated backend paymentPageUrl. Versioned authenticated-encrypted token state stores both independent values and reads legacy token-only state without rewriting attempts. Missing URL permits embedded use and fails closed for hosted use; invalid URLs preserve the original key during recovery. The native suite passed59tests with no failures/skips; release build had0warnings/errors. No new live/full-store/licensed acceptance was performed.

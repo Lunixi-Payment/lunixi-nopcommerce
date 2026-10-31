@@ -22,7 +22,7 @@ internal sealed class CoordinatorHost
 {
     public readonly NativeDatabase Database = new();
     public readonly FakeGatewayFactory Factory = new();
-    public readonly LunixiSettings Config = new() { Enabled = true, Hosted = true };
+    public readonly LunixiSettings Config = new() { Enabled = true };
     public CredentialProfiles Profiles { get; private set; } = null!;
     public PaymentCoordinator Coordinator { get; private set; } = null!;
     public GatewayCredentials Credentials { get; private set; } = null!;
@@ -80,6 +80,7 @@ internal sealed class FakeGateway : ILunixiGateway
     public bool FailCreateOnce { get; set; }
     public bool FailMutationOnce { get; set; }
     public bool ConflictAlias { get; set; }
+    public string? PaymentPageUrl { get; set; } = "https://pay.lunixi.com/payment/separate-hosted-token-12345";
     public long Fee { get; set; }
     public List<string> CreateKeys { get; } = [];
     public List<string> MutationKeys { get; } = [];
@@ -88,7 +89,7 @@ internal sealed class FakeGateway : ILunixiGateway
     {
         body = input.Clone(); CreateKeys.Add(key);
         if (FailCreateOnce) { FailCreateOnce = false; throw new GatewayFault(outcomeUnknown: true); }
-        return Task.FromResult(Reply(new { paymentId = "pay-1", token = "synthetic-checkout-token", intentId = ConflictAlias ? "conflicting-id" : "pay-1" }));
+        return Task.FromResult(Reply(new { paymentId = "pay-1", token = "synthetic-checkout-token", paymentPageUrl = PaymentPageUrl, intentId = ConflictAlias ? "conflicting-id" : "pay-1" }));
     }
     public Task<GatewayReply> GetPaymentAsync(string paymentId, CancellationToken cancellationToken)
     {

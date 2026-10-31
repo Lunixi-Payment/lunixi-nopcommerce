@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 — 2026-10-31
+
+- Default new checkout configuration to the existing Lunixi form on the merchant site; retain the optional hosted selector and explicit merchant settings.
+- Redirect only to a validated backend `paymentPageUrl`; its opaque token can differ from the embedded form token. Missing URLs keep embedded checkout available and hosted checkout on hold without creating another intent/key.
+- Preserve historical checkout modes, encrypted credentials/tokens, immutable request bodies and existing idempotency/3DS/split return behavior.
+- Store the backend URL with the browser token in authenticated-encrypted versioned state; read legacy token-only state without rewriting financial history.
+
 ## 0.1.1 — 2026-10-31
 
 - Initialize the optional local NuGet feed in all bootstrap modes so a clean GitHub export restores without NU1301.
