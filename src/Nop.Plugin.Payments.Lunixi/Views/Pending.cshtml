@@ -1,0 +1,3 @@
+@model CheckoutModel
+@{ Layout = "_ColumnsOne"; }
+<div class="page"><p>@T("Plugins.Payments.Lunixi.Pending")</p><a href="@Url.RouteUrl("OrderDetails", new { orderId = Model.OrderId })">@T("Plugins.Payments.Lunixi.Order")</a></div>

@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated caches and build outputs are excluded from public source; the installable staging tree is scanned separately."
+paths = ['''(?:^|/)(?:\.cache|artifacts|bin|obj)(?:/|$)''']

@@ -1,0 +1,13 @@
+.cache/
+artifacts/
+**/bin/
+**/obj/
+TestResults/
+*.db
+*.pem
+*.key
+.env
+.env.*
+.DS_Store
+__pycache__/
+*.pyc

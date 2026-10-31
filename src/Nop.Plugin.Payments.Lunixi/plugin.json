@@ -1,0 +1,11 @@
+{
+  "Group": "Payment methods",
+  "FriendlyName": "Lunixi Payments",
+  "SystemName": "Payments.Lunixi",
+  "Version": "0.1.0",
+  "SupportedVersions": ["4.90"],
+  "Author": "Lunixi",
+  "DisplayOrder": 10,
+  "FileName": "Nop.Plugin.Payments.Lunixi.dll",
+  "Description": "Lunixi hosted or embedded checkout, authenticated settlement reconciliation and secure payment operations."
+}

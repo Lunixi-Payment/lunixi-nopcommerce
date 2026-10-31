@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Authors>Lunixi</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Lunixi-Payment/lunixi-nopcommerce</RepositoryUrl>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <RazorCompileOnBuild>true</RazorCompileOnBuild>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Reference Include="Nop.Core"><HintPath>$(NopRuntimePath)/Nop.Core.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Nop.Data"><HintPath>$(NopRuntimePath)/Nop.Data.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Nop.Services"><HintPath>$(NopRuntimePath)/Nop.Services.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Nop.Web.Framework"><HintPath>$(NopRuntimePath)/Nop.Web.Framework.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Nop.Web"><HintPath>$(NopRuntimePath)/Nop.Web.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FluentMigrator"><HintPath>$(NopRuntimePath)/FluentMigrator.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FluentMigrator.Abstractions"><HintPath>$(NopRuntimePath)/FluentMigrator.Abstractions.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="linq2db"><HintPath>$(NopRuntimePath)/linq2db.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Npgsql"><HintPath>$(NopRuntimePath)/Npgsql.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Microsoft.Data.SqlClient"><HintPath>$(NopRuntimePath)/Microsoft.Data.SqlClient.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="MySqlConnector"><HintPath>$(NopRuntimePath)/MySqlConnector.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="Views/**/*.cshtml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Update="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets/*" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="logo.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

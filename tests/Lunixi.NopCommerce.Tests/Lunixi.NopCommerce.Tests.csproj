@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" PrivateAssets="all" />
+    <PackageReference Include="Moq" Version="4.21.0" />
+    <ProjectReference Include="../../src/Nop.Plugin.Payments.Lunixi/Nop.Plugin.Payments.Lunixi.csproj" />
+    <ProjectReference Include="../../src/Lunixi.NopCommerce.Gateway/Lunixi.NopCommerce.Gateway.csproj" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <NopTestAssembly Include="$(NopRuntimePath)/Nop.*.dll;$(NopRuntimePath)/linq2db.dll;$(NopRuntimePath)/MySqlConnector.dll;$(NopRuntimePath)/Npgsql.dll;$(NopRuntimePath)/Microsoft.Data.SqlClient.dll;$(NopRuntimePath)/FluentMigrator*.dll;$(NopRuntimePath)/Newtonsoft.Json.dll" />
+    <Reference Include="@(NopTestAssembly)"><Private>true</Private></Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+@model CheckoutModel
+@{ Layout = "_ColumnsOne"; }
+<div class="page lunixi-checkout-page">
+    <img src="~/Plugins/Payments.Lunixi/Assets/lunixi-logo.svg" alt="Lunixi" width="200" />
+    @if (Model.Token is null)
+    {
+        <p>@T("Plugins.Payments.Lunixi.Unavailable")</p>
+        <form asp-route="Lunixi.Begin" asp-route-orderId="@Model.OrderId" method="post">@Html.AntiForgeryToken()<button type="submit" class="button-1">@T("Plugins.Payments.Lunixi.Pay")</button></form>
+    }
+    else
+    {
+        <div id="lunixi-checkout-form"></div>
+        <p id="lunixi-checkout-unavailable" role="alert" hidden>@T("Plugins.Payments.Lunixi.Unavailable")</p>
+        <script type="application/json" id="lunixi-checkout-config">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { type = "payment", target = "lunixi-checkout-form", options = new { token = Model.Token } }))</script>
+        <script src="https://cdn.lunixi.com/lunixi-checkout.min.js" defer></script>
+        <script src="~/Plugins/Payments.Lunixi/Assets/checkout.js" defer></script>
+    }
+    <a href="@Url.RouteUrl("OrderDetails", new { orderId = Model.OrderId })">@T("Plugins.Payments.Lunixi.Order")</a>
+</div>
