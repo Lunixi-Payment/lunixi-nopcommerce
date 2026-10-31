@@ -52,9 +52,14 @@ internal sealed class NativeDatabase
         if (config.GetProperty("database").GetString() != "lunixi_nop") throw new InvalidOperationException("Native tests require the dedicated lunixi_nop schema.");
         var connection = new MySqlConnector.MySqlConnectionStringBuilder
         {
-            Server = config.GetProperty("host").GetString(), Port = (uint)config.GetProperty("port").GetInt32(),
-            Database = "lunixi_nop", UserID = config.GetProperty("username").GetString(), Password = config.GetProperty("password").GetString(),
-            SslMode = MySqlConnector.MySqlSslMode.Disabled, ConnectionTimeout = 10, DefaultCommandTimeout = 30,
+            Server = config.GetProperty("host").GetString(),
+            Port = (uint)config.GetProperty("port").GetInt32(),
+            Database = "lunixi_nop",
+            UserID = config.GetProperty("username").GetString(),
+            Password = config.GetProperty("password").GetString(),
+            SslMode = MySqlConnector.MySqlSslMode.Disabled,
+            ConnectionTimeout = 10,
+            DefaultCommandTimeout = 30,
         };
         configuration = new() { ConnectionString = connection.ConnectionString, DataProvider = DataProviderType.MySql, SQLCommandTimeout = 30 };
         Singleton<DataConfig>.Instance = configuration;
@@ -99,9 +104,18 @@ internal sealed class NativeDatabase
     {
         var order = new Order
         {
-            OrderGuid = Guid.NewGuid(), StoreId = 1, CustomerId = 7, BillingAddressId = 10, CustomOrderNumber = "TEST-" + Guid.NewGuid().ToString("N"),
-            PaymentMethodSystemName = "Payments.Lunixi", OrderTotal = amount, CustomerCurrencyCode = "TRY", CurrencyRate = 1m,
-            PaymentStatus = PaymentStatus.Pending, OrderStatus = OrderStatus.Pending, ShippingStatus = ShippingStatus.NotYetShipped,
+            OrderGuid = Guid.NewGuid(),
+            StoreId = 1,
+            CustomerId = 7,
+            BillingAddressId = 10,
+            CustomOrderNumber = "TEST-" + Guid.NewGuid().ToString("N"),
+            PaymentMethodSystemName = "Payments.Lunixi",
+            OrderTotal = amount,
+            CustomerCurrencyCode = "TRY",
+            CurrencyRate = 1m,
+            PaymentStatus = PaymentStatus.Pending,
+            OrderStatus = OrderStatus.Pending,
+            ShippingStatus = ShippingStatus.NotYetShipped,
             CreatedOnUtc = DateTime.UtcNow,
         };
         await Provider.InsertEntityAsync(order); return order;
@@ -124,8 +138,13 @@ internal sealed class NativeDatabase
     }
     private static string SqlType(DbType value) => value switch
     {
-        DbType.Int32 => "INT", DbType.Int64 => "BIGINT", DbType.Boolean => "TINYINT(1)", DbType.Decimal => "DECIMAL(18,4)",
-        DbType.DateTime or DbType.DateTime2 => "DATETIME(6)", DbType.Guid => "CHAR(36)", _ => "LONGTEXT",
+        DbType.Int32 => "INT",
+        DbType.Int64 => "BIGINT",
+        DbType.Boolean => "TINYINT(1)",
+        DbType.Decimal => "DECIMAL(18,4)",
+        DbType.DateTime or DbType.DateTime2 => "DATETIME(6)",
+        DbType.Guid => "CHAR(36)",
+        _ => "LONGTEXT",
     };
     private sealed class TestEngine(IServiceProvider services) : NopEngine
     { public override IServiceProvider ServiceProvider => services; }

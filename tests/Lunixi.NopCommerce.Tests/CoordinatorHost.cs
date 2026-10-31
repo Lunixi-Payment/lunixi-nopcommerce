@@ -94,8 +94,17 @@ internal sealed class FakeGateway : ILunixiGateway
     {
         if (paymentId != "pay-1") throw new GatewayFault(statusCode: 404);
         var amount = body.GetProperty("amount").GetInt64() + Fee;
-        return Task.FromResult(Reply(new { id = "pay-1", merchantId = MerchantId, orderId = body.GetProperty("orderId").GetString(), currency = body.GetProperty("currency").GetString(), amount, status = Status,
-            metadata = body.GetProperty("metadata"), details = new { capturedAmount = Status is "AUTHORIZED" or "VOIDED" or "EXPIRED" or "FAILED" ? 0 : amount, refundedAmount = Refunded } }));
+        return Task.FromResult(Reply(new
+        {
+            id = "pay-1",
+            merchantId = MerchantId,
+            orderId = body.GetProperty("orderId").GetString(),
+            currency = body.GetProperty("currency").GetString(),
+            amount,
+            status = Status,
+            metadata = body.GetProperty("metadata"),
+            details = new { capturedAmount = Status is "AUTHORIZED" or "VOIDED" or "EXPIRED" or "FAILED" ? 0 : amount, refundedAmount = Refunded }
+        }));
     }
     public Task<GatewayReply> GetSplitAsync(string splitId, CancellationToken cancellationToken) => throw new GatewayFault("not_configured");
     public async Task<GatewayReply> MutateAsync(string paymentId, string operation, long? amount, string key, CancellationToken cancellationToken)
