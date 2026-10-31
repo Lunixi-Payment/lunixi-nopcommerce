@@ -1,5 +1,14 @@
 name: Native build and security
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish the tested merchant ZIP to its existing version tag after all checks pass'
+        type: boolean
+        required: true
+        default: false
 permissions:
   contents: read
 jobs:
@@ -70,3 +79,111 @@ jobs:
           .cache/gitleaks dir . --config .gitleaks.toml --redact --no-banner
           printf '[extend]\nuseDefault = true\n' > .cache/default-gitleaks.toml
           .cache/gitleaks dir artifacts/staging --config .cache/default-gitleaks.toml --redact --no-banner
+      - name: Prepare only the exact tested ZIP and its checksum
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_release
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, re
+          metadata = Path('VERSION')
+          version = json.loads(metadata.read_text())["version"] if metadata.suffix == ".json" else metadata.read_text().strip()
+          if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+              raise SystemExit("A trusted semantic release version is required.")
+          import hashlib, shutil, zipfile
+          name = 'Lunixi.Payments.nopCommerce.4.90-{version}.zip'.format(version=version)
+          source = Path('artifacts') / name
+          if source.is_symlink() or not source.is_file() or not 0 < source.stat().st_size <= 256 * 1024 * 1024:
+              raise SystemExit("The exact tested merchant ZIP is missing or invalid.")
+          with zipfile.ZipFile(source) as archive:
+              if len(archive.infolist()) > 20000 or sum(item.file_size for item in archive.infolist()) > 1024 * 1024 * 1024:
+                  raise SystemExit("Merchant archive exceeds the release bound.")
+              if archive.testzip() is not None:
+                  raise SystemExit("Merchant archive CRC verification failed.")
+          output = Path("release-assets")
+          output.mkdir()
+          shutil.copyfile(source, output / name)
+          digest = hashlib.sha256(source.read_bytes()).hexdigest()
+          (output / "SHA256SUMS").write_text(digest + "  " + name + "\n", encoding="ascii")
+          PY
+      - name: Store tested native release assets
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_release
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tested-native-release
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+  publish_release:
+    name: Publish the tested merchant ZIP to an existing tag
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_release
+    needs: native
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: native-release-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: tested-native-release
+          path: release-assets
+      - name: Validate passive assets against trusted source metadata
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, re
+          metadata = Path('VERSION')
+          version = json.loads(metadata.read_text())["version"] if metadata.suffix == ".json" else metadata.read_text().strip()
+          if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+              raise SystemExit("A trusted semantic release version is required.")
+          import hashlib, os, zipfile
+          name = 'Lunixi.Payments.nopCommerce.4.90-{version}.zip'.format(version=version)
+          folder = Path("release-assets")
+          if folder.is_symlink() or {path.name for path in folder.iterdir()} != {name, "SHA256SUMS"}:
+              raise SystemExit("Release accepts only the expected ZIP and SHA256SUMS.")
+          asset, checksum = folder / name, folder / "SHA256SUMS"
+          if asset.is_symlink() or checksum.is_symlink() or not asset.is_file() or not checksum.is_file():
+              raise SystemExit("Release assets must be regular files.")
+          if not 0 < asset.stat().st_size <= 256 * 1024 * 1024 or checksum.stat().st_size > 1024:
+              raise SystemExit("Release assets exceed their configured bound.")
+          digest = hashlib.sha256(asset.read_bytes()).hexdigest()
+          if checksum.read_text(encoding="ascii") != digest + "  " + name + "\n":
+              raise SystemExit("The tested ZIP checksum does not match.")
+          with zipfile.ZipFile(asset) as archive:
+              if len(archive.infolist()) > 20000 or sum(item.file_size for item in archive.infolist()) > 1024 * 1024 * 1024 or archive.testzip() is not None:
+                  raise SystemExit("Invalid merchant ZIP; artifact contents are never executed.")
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a") as output:
+              output.write("version=" + version + "\nzip_name=" + name + "\n")
+          notes = "Merchant installation ZIP and SHA256SUMS from the fully passing workflow run.\n\n"
+          notes += "Source commit: " + os.environ["GITHUB_SHA"] + "\n"
+          notes += "Verification: " + os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"] + "\n\n"
+          notes += "Verify SHA256SUMS before installation; follow the repository README and staging/backup instructions. This release does not imply marketplace certification or a live merchant charge.\n"
+          Path("release-notes.md").write_text(notes, encoding="utf-8")
+          PY
+      - name: Create the release without overwriting an existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.verify.outputs.version }}
+          RELEASE_ZIP: ${{ steps.verify.outputs.zip_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v$RELEASE_VERSION"
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" > /dev/null
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo 'Release already exists; refusing to overwrite it.' >&2
+            exit 1
+          fi
+          gh release create "$tag" "release-assets/$RELEASE_ZIP" release-assets/SHA256SUMS --repo "$GITHUB_REPOSITORY" --verify-tag --title "Lunixi nopCommerce $RELEASE_VERSION" --notes-file release-notes.md
