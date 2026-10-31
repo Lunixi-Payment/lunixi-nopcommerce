@@ -2,6 +2,10 @@
 
 # Lunixi Payments for nopCommerce
 
+**Verified public merchant ZIP 0.1.2:** [`Lunixi.Payments.nopCommerce.4.90-0.1.2.zip`](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip) · [SHA256SUMS](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/SHA256SUMS) · [Release v0.1.2](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/tag/v0.1.2). The CI-built installation package was downloaded and verified on 2026-10-31. Use this asset rather than GitHub's automatic source archive.
+
+Public CI ZIP SHA256: `74e5198a455aa0e07f923774ab38182011fa828c50f8476f6202c0f6f7c4386f`.
+
 The existing Lunixi form opens **on the merchant website by default**. Hosted checkout remains optional and uses only the validated backend `paymentPageUrl`. Its opaque token can differ from the embedded token; the module never builds this URL from that token. Missing or legacy URLs keep embedded checkout available; hosted checkout stays on hold/reconciliation without a new intent or key. Existing attempts keep their saved mode, request body, profile and key. The official form/panel controls available methods and multi-card options.
 
 Native payment plugin **0.1.2** for the nopCommerce **4.90 API line**, verified against official **4.90.8** assemblies and .NET 9. The plugin uses the shared [Lunixi .NET SDK](https://github.com/Lunixi-Payment/lunixi-dotnet) for signing, authentication, payment transport and webhook verification. No raw-card form is implemented by the merchant server.
@@ -17,14 +21,14 @@ The existing Lunixi form is embedded by default; hosted checkout is optional. En
 
 ## Build the installable ZIP
 
-Install .NET 9 SDK and Python 3.10+. The default bootstrap downloads checksum-pinned official nopCommerce 4.90.8 references and the `lunixi-dotnet` v0.1.0 GitHub source tag. Before that tag is available, provide the trusted SDK source explicitly:
+Maintainers need .NET 9 SDK and Python 3.10+. The default bootstrap downloads checksum-pinned official nopCommerce 4.90.8 references and the public `lunixi-dotnet` v0.1.0 source tag:
 
 ```bash
-python3 scripts/bootstrap.py --sdk-source /absolute/path/to/lunixi-dotnet
+python3 scripts/bootstrap.py
 python3 scripts/build.py --restore
 ```
 
-An already downloaded trusted 4.90.8 NoSource directory can be supplied with `--nop-runtime`. An explicit `Lunixi.Sdk.0.1.0.nupkg` can be supplied with `--sdk-package`; this does not assume NuGet.org publication. Source/project-reference builds are the default and avoid pretending a registry package exists.
+An already downloaded trusted 4.90.8 NoSource directory can be supplied with `--nop-runtime`, or a reviewed SDK checkout with `--sdk-source`. An explicitly supplied local `Lunixi.Sdk.0.1.0.nupkg` can be selected with `--sdk-package`. The default pinned source/project-reference build does not require a NuGet.org package; the merchant ZIP already bundles the runtime dependencies.
 
 Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip` and its SHA-256 file. The archive has one root directory, `Payments.Lunixi`, matching the native upload contract. Platform assemblies are compile/test references and are not redistributed in the plugin ZIP.
 
