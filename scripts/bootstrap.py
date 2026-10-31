@@ -25,7 +25,7 @@ def extract_safely(archive, destination):
 
 
 def download(url, destination, expected=None):
-    request = urllib.request.Request(url, headers={"User-Agent": "Lunixi-nopCommerce-build/0.1.0"})
+    request = urllib.request.Request(url, headers={"User-Agent": "Lunixi-nopCommerce-build/0.1.1"})
     with urllib.request.urlopen(request, timeout=60) as response, destination.open("wb") as output:
         shutil.copyfileobj(response, output)
     digest = hashlib.sha256(destination.read_bytes()).hexdigest()
@@ -44,6 +44,8 @@ def main():
         parser.error("Choose SDK source or a local SDK package")
     cache = ROOT / ".cache"
     cache.mkdir(exist_ok=True)
+    # NuGet validates every configured local feed, even in SDK source mode.
+    (cache / "nuget").mkdir(exist_ok=True)
     native = args.nop_runtime.resolve() if args.nop_runtime else cache / "nop-4.90.8"
     if not native.exists():
         archive = cache / "nop-4.90.8.zip"

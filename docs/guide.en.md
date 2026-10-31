@@ -1,6 +1,6 @@
 # nopCommerce payment plugin
 
-Lunixi Payments 0.1.0 implements nopCommerce's native `IPaymentMethod` contract. It targets the **4.90 API line**, with build and native database verification against **4.90.8** and .NET 9. It uses the shared [.NET SDK](https://docs.lunixi.com/en/sdks/dotnet) for request signing, authentication, payment transport and webhook verification.
+Lunixi Payments 0.1.1 implements nopCommerce's native `IPaymentMethod` contract. It targets the **4.90 API line**, with build and native database verification against **4.90.8** and .NET 9. It uses the shared [.NET SDK](https://docs.lunixi.com/en/sdks/dotnet) for request signing, authentication, payment transport and webhook verification.
 
 Source: [Lunixi-Payment/lunixi-nopcommerce](https://github.com/Lunixi-Payment/lunixi-nopcommerce). Source availability does not imply a nopCommerce Marketplace listing or NuGet.org publication.
 
@@ -15,7 +15,7 @@ python3 scripts/build.py --restore
 
 Bootstrap fetches checksum-pinned official nopCommerce 4.90.8 references. A trusted existing NoSource directory can be supplied with `--nop-runtime`. The default shared-SDK input is the `lunixi-dotnet` v0.1.0 GitHub source tag; specify `--sdk-source` while that tag is unavailable, or `--sdk-package` for an explicit local `Lunixi.Sdk.0.1.0.nupkg`. This build does not pretend an unpublished registry package exists.
 
-Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.0.zip` with a SHA-256 file. It contains one native `Payments.Lunixi` directory, the plugin, views/assets and a private SDK vendor context. Platform assemblies are not redistributed.
+Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.1.zip` with a SHA-256 file. It contains one native `Payments.Lunixi` directory, the plugin, views/assets and a private SDK vendor context. Platform assemblies are not redistributed.
 
 Upload from **Configuration → Local plugins → Upload plugin or theme**, restart as requested by nopCommerce, then install **Lunixi Payments**. Finally activate it under **Configuration → Payment methods**.
 
@@ -73,10 +73,12 @@ nopCommerce applies its financial result after the payment method returns. The p
 
 ## Retention and compatibility limits
 
-Uninstall disables the task and preserves financial attempts, operations, inbox, settings and encrypted profiles. Keep the server key and required merchant credentials until refund/dispute retention ends. Recurring payments are not implemented in 0.1.0. Older nopCommerce lines and 5.00 beta are not claimed compatible.
+Uninstall disables the task and preserves financial attempts, operations, inbox, settings and encrypted profiles. Keep the server key and required merchant credentials until refund/dispute retention ends. Recurring payments are not implemented in 0.1.1. Older nopCommerce lines and 5.00 beta are not claimed compatible.
 
 Native database acceptance uses real MariaDB 11/InnoDB and official mappings, repositories, `OrderService` and `OrderProcessingService`. Ambient transaction enlistment is required; MySQL financial/order/note/queued-email tables must be InnoDB and are checked. SQL Server/PostgreSQL dialects are implemented but local native acceptance has not been executed for them; validate those deployments in staging. External third-party event consumers must queue effects durably rather than acting on an uncommitted transaction.
 
 The repository's verification record lists actual commands and limits. Tests include the shared SDK, private assembly/native-crypto loading, native lifecycle, concurrency/replay, rollback, encrypted storage, capabilities, amount/fee/split evidence and unknown outcomes. No live charge is made, and source publication does not imply marketplace approval.
 
 `FAILED` with zero capture alone does not prove definitive failure: public status does not expose outcome certainty. It remains review and cannot rotate an attempt key. Only verified `VOIDED`/`EXPIRED` with zero settlement may permit a new attempt.
+
+The canonical browser callback is POST. A separate anonymous, bounded adapter ignores every submitted field and performs only a fixed same-origin 303 redirect. The resulting HTTPS GET restores native customer/store ownership checks before displaying any order link. Neither stage performs gateway reconciliation or treats callback fields as payment proof.

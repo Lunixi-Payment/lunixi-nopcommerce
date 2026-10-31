@@ -30,6 +30,8 @@ jobs:
           dotnet-version: 9.0.320
       - name: Fetch checksum-pinned platform and versioned shared SDK
         run: python3 scripts/bootstrap.py
+      - name: Clean-export restore regression
+        run: python3 scripts/verify-clean-restore.py --nop-runtime "$NOP_RUNTIME_PATH" --sdk-source .cache/lunixi-dotnet
       - name: Prepare isolated test database configuration
         run: |
           python3 - <<'PY'

@@ -2,7 +2,7 @@
 
 # Lunixi Payments for nopCommerce
 
-Native payment plugin **0.1.0** for the nopCommerce **4.90 API line**, verified against official **4.90.8** assemblies and .NET 9. The plugin uses the shared [Lunixi .NET SDK](https://github.com/Lunixi-Payment/lunixi-dotnet) for signing, authentication, payment transport and webhook verification. No raw-card form is implemented by the merchant server.
+Native payment plugin **0.1.1** for the nopCommerce **4.90 API line**, verified against official **4.90.8** assemblies and .NET 9. The plugin uses the shared [Lunixi .NET SDK](https://github.com/Lunixi-Payment/lunixi-dotnet) for signing, authentication, payment transport and webhook verification. No raw-card form is implemented by the merchant server.
 
 Choose hosted checkout at `https://pay.lunixi.com` or the existing embedded Lunixi form. Enabled methods, installments, insurance and split availability are controlled in your Lunixi panel; the plugin does not duplicate those switches.
 
@@ -24,7 +24,7 @@ python3 scripts/build.py --restore
 
 An already downloaded trusted 4.90.8 NoSource directory can be supplied with `--nop-runtime`. An explicit `Lunixi.Sdk.0.1.0.nupkg` can be supplied with `--sdk-package`; this does not assume NuGet.org publication. Source/project-reference builds are the default and avoid pretending a registry package exists.
 
-Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.0.zip` and its SHA-256 file. The archive has one root directory, `Payments.Lunixi`, matching the native upload contract. Platform assemblies are compile/test references and are not redistributed in the plugin ZIP.
+Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.1.zip` and its SHA-256 file. The archive has one root directory, `Payments.Lunixi`, matching the native upload contract. Platform assemblies are compile/test references and are not redistributed in the plugin ZIP.
 
 ## Install and configure
 
@@ -53,7 +53,7 @@ The scheduled task polls unresolved and settled attempts without starving newer 
 
 ## Lifecycle and support
 
-Uninstall disables the plugin task and preserves financial attempts, operations, inbox, settings and encrypted credential profiles. Keep the server key and necessary merchant credentials through refund/dispute retention. Recurring payments are not implemented in 0.1.0. Generic SDK product access does not imply native integration for every separate Lunixi product.
+Uninstall disables the plugin task and preserves financial attempts, operations, inbox, settings and encrypted credential profiles. Keep the server key and necessary merchant credentials through refund/dispute retention. Recurring payments are not implemented in 0.1.1. Generic SDK product access does not imply native integration for every separate Lunixi product.
 
 English and Turkish resources use native localization. The plugin ships the original Lunixi logos. Report vulnerabilities privately through [SECURITY.md](SECURITY.md); never send real credentials or buyer data in issues.
 
@@ -64,3 +64,5 @@ See [docs/VERIFICATION.md](docs/VERIFICATION.md) for executed commands and limit
 [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [MIT](LICENSE)
 
 `FAILED` with zero capture alone does not prove definitive failure: public status does not expose outcome certainty. It remains review and cannot rotate an attempt key. Only verified `VOIDED`/`EXPIRED` with zero settlement may permit a new attempt.
+
+The canonical browser callback is POST. A separate anonymous, bounded adapter ignores every submitted field and performs only a fixed same-origin 303 redirect. The resulting HTTPS GET restores native customer/store ownership checks before displaying any order link. Neither stage performs gateway reconciliation or treats callback fields as payment proof.

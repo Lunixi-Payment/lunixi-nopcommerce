@@ -11,7 +11,7 @@
     <NuGetAuditMode>all</NuGetAuditMode>
     <NopRuntimePath Condition="'$(NopRuntimePath)' == ''">$(NOP_RUNTIME_PATH)</NopRuntimePath>
     <NopRuntimePath Condition="'$(NopRuntimePath)' == ''">$(MSBuildThisFileDirectory).cache/nop-4.90.8</NopRuntimePath>
-    <RestoreAdditionalProjectSources>$(MSBuildThisFileDirectory).cache/nuget</RestoreAdditionalProjectSources>
+    <RestoreAdditionalProjectSources Condition="Exists('$(MSBuildThisFileDirectory).cache/nuget')">$(MSBuildThisFileDirectory).cache/nuget</RestoreAdditionalProjectSources>
     <LunixiSdkProject Condition="'$(LunixiSdkProject)' == ''">$(LUNIXI_SDK_PROJECT)</LunixiSdkProject>
     <LunixiSdkProject Condition="'$(LunixiSdkProject)' == ''">$(MSBuildThisFileDirectory).cache/lunixi-dotnet/src/Lunixi.Sdk/Lunixi.Sdk.csproj</LunixiSdkProject>
     <UseLunixiSdkPackage Condition="'$(UseLunixiSdkPackage)' == ''">false</UseLunixiSdkPackage>

@@ -1,4 +1,4 @@
-# Verification record — 0.1.0
+# Verification record — 0.1.1
 
 Verified on macOS arm64 with .NET SDK 9.0.320/runtime 9.0.14, official nopCommerce 4.90.8 and a dedicated MariaDB 11/InnoDB TEST database. No LIVE gateway charge was made.
 
@@ -38,7 +38,7 @@ The explicit-nupkg build uses an isolated `.cache/package-mode-packages` NuGet c
 
 ## Executed results
 
-- **40 tests passed, 0 failed, 0 skipped** on the pinned native runtime and real MariaDB fixture.
+- **44 tests passed, 0 failed, 0 skipped** on the pinned native runtime and real MariaDB fixture.
 - Release artifact build: **0 warnings, 0 errors**, in both shared SDK source mode and explicit local-nupkg mode.
 - Source-mode locked restore passed; C# formatting, JavaScript syntax and Python compilation checks passed.
 - NuGet transitive vulnerability audit returned no vulnerable packages.
@@ -56,3 +56,11 @@ SQL Server/PostgreSQL dialects are implemented but were not exercised against lo
 GitHub CI is defined with pinned actions/native image and the same native MariaDB tests. A checked-in workflow is not evidence that remote CI has run. No marketplace approval or registry publication is asserted.
 
 The FAILED-certainty regression verifies that an authenticated FAILED status with zero capture remains review and retains its existing attempt/key. VOIDED/EXPIRED zero-settlement observations remain separately covered. No undocumented outcome-certainty field is assumed.
+
+## 0.1.1 clean-export restore correction
+
+The source-mode bootstrap now creates the optional `.cache/nuget` directory before restore. Direct MSBuild restore only includes that feed when it exists. This fixes public CI NU1301 on a clean GitHub checkout without changing financial behavior or the shared SDK 0.1.0 pin.
+
+`python3 scripts/verify-clean-restore.py --nop-runtime /trusted/native/path --sdk-source /trusted/sdk/path` copies both projects without caches/build outputs and performs a real locked restore with an initially empty NuGet package cache. CI runs this regression before native tests.
+
+Browser-return regressions cover the actual native MVC GET/POST action discovery, the narrow CSRF exception, anonymous bounded POST without dependency/order/session/gateway access, fixed same-origin 303 despite hostile fields, oversize/prefix rejection and owner-checked native GET. No callback field changes financial state.

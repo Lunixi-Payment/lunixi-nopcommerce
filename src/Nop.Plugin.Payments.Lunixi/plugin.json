@@ -2,7 +2,7 @@
   "Group": "Payment methods",
   "FriendlyName": "Lunixi Payments",
   "SystemName": "Payments.Lunixi",
-  "Version": "0.1.0",
+  "Version": "0.1.1",
   "SupportedVersions": ["4.90"],
   "Author": "Lunixi",
   "DisplayOrder": 10,

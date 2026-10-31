@@ -1,6 +1,6 @@
 # nopCommerce ödeme eklentisi
 
-Lunixi Payments 0.1.0, nopCommerce'in native `IPaymentMethod` sözleşmesini uygular. Hedef **4.90 API ailesidir**; derleme ve native veritabanı doğrulaması **4.90.8** ve .NET 9 ile yapılmıştır. İmza, kimlik doğrulama, ödeme taşıması ve webhook doğrulaması için ortak [.NET SDK](https://docs.lunixi.com/tr/sdks/dotnet) kullanılır.
+Lunixi Payments 0.1.1, nopCommerce'in native `IPaymentMethod` sözleşmesini uygular. Hedef **4.90 API ailesidir**; derleme ve native veritabanı doğrulaması **4.90.8** ve .NET 9 ile yapılmıştır. İmza, kimlik doğrulama, ödeme taşıması ve webhook doğrulaması için ortak [.NET SDK](https://docs.lunixi.com/tr/sdks/dotnet) kullanılır.
 
 Kaynak: [Lunixi-Payment/lunixi-nopcommerce](https://github.com/Lunixi-Payment/lunixi-nopcommerce). Kaynağın bulunması, nopCommerce Marketplace veya NuGet.org yayını anlamına gelmez.
 
@@ -15,7 +15,7 @@ python3 scripts/build.py --restore
 
 Bootstrap, SHA-256 ile sabitlenmiş resmî nopCommerce 4.90.8 referanslarını alır. Güvenilir mevcut NoSource klasörü `--nop-runtime` ile verilebilir. Ortak SDK'nın varsayılan kaynağı GitHub'daki `lunixi-dotnet` v0.1.0 etiketidir; etiket henüz yoksa `--sdk-source`, açıkça sağlanan yerel `Lunixi.Sdk.0.1.0.nupkg` için `--sdk-package` kullanın. Yayımlanmamış kayıt paketi varmış gibi davranılmaz.
 
-Çıktı: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.0.zip` ve SHA-256 dosyası. Arşiv; native `Payments.Lunixi` klasörünü, eklentiyi, görünüm/varlıkları ve özel SDK yükleme bağlamını içerir. Platform DLL'leri eklentiyle yeniden dağıtılmaz.
+Çıktı: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.1.zip` ve SHA-256 dosyası. Arşiv; native `Payments.Lunixi` klasörünü, eklentiyi, görünüm/varlıkları ve özel SDK yükleme bağlamını içerir. Platform DLL'leri eklentiyle yeniden dağıtılmaz.
 
 **Configuration → Local plugins → Upload plugin or theme** üzerinden yükleyin, nopCommerce'in istediği yeniden başlatmayı yapın ve **Lunixi Payments** eklentisini kurun. Ardından **Configuration → Payment methods** altında etkinleştirin.
 
@@ -73,10 +73,12 @@ nopCommerce ödeme metodu döndükten sonra native finansal sonucu yazar. Eklent
 
 ## Saklama ve uyumluluk sınırları
 
-Kaldırma; görevi kapatır, finansal deneme/işlem/inbox/ayar ve şifreli profilleri korur. Sunucu anahtarını ve gereken merchant bilgilerini iade/itiraz süresi boyunca saklayın. 0.1.0'da tekrarlayan ödeme yoktur. Eski nopCommerce aileleri ve 5.00 beta için uyumluluk iddiası yoktur.
+Kaldırma; görevi kapatır, finansal deneme/işlem/inbox/ayar ve şifreli profilleri korur. Sunucu anahtarını ve gereken merchant bilgilerini iade/itiraz süresi boyunca saklayın. 0.1.1'de tekrarlayan ödeme yoktur. Eski nopCommerce aileleri ve 5.00 beta için uyumluluk iddiası yoktur.
 
 Native kabul testleri gerçek MariaDB 11/InnoDB ve resmî mapping, repository, `OrderService`, `OrderProcessingService` ile çalışır. Ambient transaction katılımı zorunludur; MySQL finans/sipariş/not/e-posta kuyruğu tabloları InnoDB olmalı ve denetlenir. SQL Server/PostgreSQL yolları uygulanmıştır ancak yerel native kabul testleri bu sağlayıcılarda çalıştırılmamıştır; staging doğrulaması yapın. Üçüncü taraf olay tüketicileri tamamlanmamış işlemden dış etki üretmek yerine kalıcı kuyruk kullanmalıdır.
 
 Depodaki doğrulama kaydı gerçek komutları ve sınırları listeler. Ortak SDK, özel assembly/yerel kripto yükleme, native yaşam döngüsü, yarış/tekrar, rollback, şifreli saklama, yetki, tutar/fark/parçalı ödeme ve belirsiz sonuç testleri vardır. Canlı ödeme yapılmaz; kaynak yayını marketplace onayı anlamına gelmez.
 
 `FAILED` durumu, sıfır yakalanan tutarla birlikte bile tek başına kesin başarısızlık kanıtı değildir. Otomatik yeni anahtar oluşturulmaz; inceleme gerekir. Yeni deneme yalnızca doğrulanmış `VOIDED`/`EXPIRED` ve sıfır tahsilatla açılabilir.
+
+Standart tarayıcı dönüşü POST kullanır. Sınırlı ve anonim alıcı, gönderilen alanların tamamını yok sayıp yalnızca aynı mağaza kökünde sabit 303 yönlendirmesi yapar. Ardından gelen HTTPS GET, sipariş bağlantısını göstermeden önce yerleşik müşteri/mağaza sahipliğini yeniden denetler. Dönüş alanları ödeme kanıtı sayılmaz ve bu iki adım gateway uzlaştırması yapmaz.

@@ -40,13 +40,42 @@ public sealed class LunixiCheckoutController(PaymentCoordinator coordinator, IWo
         catch (Exception error) when (error is PaymentReviewException or GatewayFault or OperationCanceledException) { }
         return RedirectToRoute("Lunixi.Pay", new { orderId });
     }
-    [AcceptVerbs("GET", "POST")]
-    [IgnoreAntiforgeryToken]
-    public IActionResult Return(int orderId)
+    [HttpGet]
+    public async Task<IActionResult> Return(int orderId)
     {
+        if (!Request.IsHttps) return Forbid();
         Response.Headers.CacheControl = "no-store";
-        // No amount/status/order mutation from callback fields and no credential-bearing redirect URL.
+        var current = await Current();
+        try { await coordinator.EnsureOwnerAsync(orderId, current.Customer, current.Store); }
+        catch (PaymentReviewException) { return NotFound(); }
         return View("~/Plugins/Payments.Lunixi/Views/Pending.cshtml", new CheckoutModel(orderId));
+    }
+    [HttpPost]
+    [ActionName("Return")]
+    [IgnoreAntiforgeryToken]
+    [RequestSizeLimit(65536)]
+    public async Task<IActionResult> Callback()
+    {
+        // Cross-site POST may have no SameSite=Lax cookie. Read no session/order and
+        // ignore every submitted field; a 303 GET restores native ownership checks.
+        if (!Request.IsHttps) return Forbid();
+        Response.Headers.CacheControl = "no-store";
+        if (!Request.RouteValues.TryGetValue("orderId", out var routeValue) ||
+            !int.TryParse(Convert.ToString(routeValue, System.Globalization.CultureInfo.InvariantCulture),
+                System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var orderId) || orderId < 1)
+            return BadRequest();
+        var prefix = Request.PathBase.Value ?? "";
+        if (!System.Text.RegularExpressions.Regex.IsMatch(prefix, @"^(?:/[A-Za-z0-9._~-]+)*$", System.Text.RegularExpressions.RegexOptions.CultureInvariant) ||
+            prefix.Split('/').Any(part => part is "." or "..")) return BadRequest();
+        if (Request.ContentLength > 65536) return StatusCode(413);
+        var total = 0; var buffer = new byte[8192]; int read;
+        while ((read = await Request.Body.ReadAsync(buffer, HttpContext.RequestAborted)) != 0)
+        {
+            total += read; if (total > 65536) return StatusCode(413);
+        }
+        Response.StatusCode = 303;
+        Response.Headers.Location = prefix + "/lunixi/return/" + orderId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return new EmptyResult();
     }
     [HttpPost]
     [IgnoreAntiforgeryToken]
