@@ -81,9 +81,9 @@ def main():
     else:
         shutil.copy2(packages / f"lunixi.sdk/{SDK_VERSION}/LICENSE", notices / "Lunixi.Sdk-LICENSE")
     metadata = json.loads((destination / "plugin.json").read_text())
-    if metadata["SystemName"] != "Payments.Lunixi" or metadata["Version"] != "1.0.0" or metadata["SupportedVersions"] != ["4.90"]:
+    if metadata["SystemName"] != "Payments.Lunixi" or metadata["Version"] != "1.0.1" or metadata["SupportedVersions"] != ["4.90"]:
         raise ValueError("Plugin manifest drift")
-    target = artifacts / "Lunixi.Payments.nopCommerce.4.90-1.0.0.zip"
+    target = artifacts / "Lunixi.Payments.nopCommerce.4.90-1.0.1.zip"
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
         for file in sorted(destination.rglob("*")):
             if file.is_file():

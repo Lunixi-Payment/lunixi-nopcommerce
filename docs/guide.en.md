@@ -2,7 +2,7 @@
 
 The existing Lunixi form opens **on the merchant website by default**. Hosted checkout remains optional and uses only the validated backend `paymentPageUrl`. Its opaque token can differ from the embedded token; the module never builds this URL from that token. Missing or legacy URLs keep embedded checkout available; hosted checkout stays on hold/reconciliation without a new intent or key. Existing attempts keep their saved mode, request body, profile and key. The official form/panel controls available methods and multi-card options.
 
-Lunixi Payments 1.0.0 implements nopCommerce's native `IPaymentMethod` contract. It targets the **4.90 API line**, with build and native database verification against **4.90.8** and .NET 9. It uses the shared [.NET SDK](https://docs.lunixi.com/en/sdks/dotnet) for request signing, authentication, payment transport and webhook verification.
+Lunixi Payments 1.0.1 implements nopCommerce's native `IPaymentMethod` contract. It targets the **4.90 API line**, with build and native database verification against **4.90.8** and .NET 9. It uses the shared [.NET SDK](https://docs.lunixi.com/en/sdks/dotnet) for request signing, authentication, payment transport and webhook verification.
 
 Source: [Lunixi-Payment/lunixi-nopcommerce](https://github.com/Lunixi-Payment/lunixi-nopcommerce). Source availability does not imply a nopCommerce Marketplace listing or NuGet.org publication.
 
@@ -17,7 +17,7 @@ python3 scripts/build.py --restore
 
 Bootstrap fetches checksum-pinned official nopCommerce 4.90.8 references. A trusted existing NoSource directory can be supplied with `--nop-runtime`. The default shared SDK is `Lunixi.Sdk` 1.0.1 from NuGet.org, restored from the reviewed package lock in an isolated cache. The package must exist before this release build passes. Explicit `--sdk-source` or `--sdk-package` inputs are for reviewed development acceptance; they do not establish registry publication and do not replace the default package lock.
 
-Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-1.0.0.zip` with a SHA-256 file. It contains one native `Payments.Lunixi` directory, the plugin, views/assets and a private SDK vendor context. Platform assemblies are not redistributed.
+Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-1.0.1.zip` with a SHA-256 file. It contains one native `Payments.Lunixi` directory, the plugin, views/assets and a private SDK vendor context. Platform assemblies are not redistributed.
 
 Upload from **Configuration → Local plugins → Upload plugin or theme**, restart as requested by nopCommerce, then install **Lunixi Payments**. Finally activate it under **Configuration → Payment methods**.
 
@@ -75,7 +75,7 @@ nopCommerce applies its financial result after the payment method returns. The p
 
 ## Retention and compatibility limits
 
-Uninstall disables the task and preserves financial attempts, operations, inbox, settings and encrypted profiles. Keep the server key and required merchant credentials until refund/dispute retention ends. Recurring payments are not implemented in 1.0.0. Older nopCommerce lines and 5.00 beta are not claimed compatible.
+Uninstall disables the task and preserves financial attempts, operations, inbox, settings and encrypted profiles. Keep the server key and required merchant credentials until refund/dispute retention ends. Recurring payments are not implemented in 1.0.1. Older nopCommerce lines and 5.00 beta are not claimed compatible.
 
 Native database acceptance uses real MariaDB 11/InnoDB and official mappings, repositories, `OrderService` and `OrderProcessingService`. Ambient transaction enlistment is required; MySQL financial/order/note/queued-email tables must be InnoDB and are checked. SQL Server/PostgreSQL dialects are implemented but local native acceptance has not been executed for them; validate those deployments in staging. External third-party event consumers must queue effects durably rather than acting on an uncommitted transaction.
 

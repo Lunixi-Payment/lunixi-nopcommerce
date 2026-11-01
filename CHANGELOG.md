@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 — 2026-11-01
+
+- Align the money-string regression test with the enforced formatter; retain the exact monetary validation and actual NuGet 1.0.1 dependency.
+
 ## 1.0.0 — 2026-11-01
 
 - Breaking: use the 1.0.0 SDK canonical minor-string API; reject numeric monetary evidence.

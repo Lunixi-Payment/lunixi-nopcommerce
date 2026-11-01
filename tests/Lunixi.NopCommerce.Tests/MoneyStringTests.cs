@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Nop.Plugin.Payments.Lunixi.Domain;
+
 namespace Lunixi.NopCommerce.Tests;
+
 public class MoneyStringTests
 {
     [Fact]

@@ -126,7 +126,7 @@
         "type": "Project",
         "dependencies": {
           "Lunixi.Sdk": "[1.0.1, )",
-          "Nop.Plugin.Payments.Lunixi": "[1.0.0, )"
+          "Nop.Plugin.Payments.Lunixi": "[1.0.1, )"
         }
       },
       "lunixi.sdk": {
