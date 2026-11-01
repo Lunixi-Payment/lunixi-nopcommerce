@@ -1,11 +1,11 @@
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="src/Nop.Plugin.Payments.Lunixi/Assets/lunixi-logo-dark.svg"><img src="src/Nop.Plugin.Payments.Lunixi/Assets/lunixi-logo.svg" alt="Lunixi" width="240"></picture></p>
 
 
-**1.0.2 requires the canonical money-string SDK.** The default build restores `Lunixi.Sdk` 1.0.1 from NuGet.org using the committed package lock; registry publication must be verified before release acceptance. See [migration](MIGRATION-1.0.md). Historical 0.x assets do not implement this API cut.
+**1.0.2 requires the canonical money-string SDK.** The default build restores the published [Lunixi.Sdk 1.0.1 package from NuGet.org](https://www.nuget.org/packages/Lunixi.Sdk/1.0.1) using the committed package lock and verified registry hash. See [migration](MIGRATION-1.0.md). Historical 0.x assets do not implement this API cut.
 
 # Lunixi Payments for nopCommerce
 
-**Historical merchant ZIP 0.1.2:** [`Lunixi.Payments.nopCommerce.4.90-0.1.2.zip`](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip) was downloaded and verified on 2026-10-31. It does not implement the 1.0.2 money contract. Install the 1.0.2 merchant ZIP with its matching release checksum; GitHub’s automatic source archive is not the installation package.
+**Historical merchant ZIP 0.1.2:** [`Lunixi.Payments.nopCommerce.4.90-0.1.2.zip`](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip) was downloaded and verified on 2026-10-31. It does not implement the 1.0.2 money contract. Install the published merchant ZIP from [GitHub Release v1.0.2](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/tag/v1.0.2) with its matching release checksum; GitHub’s automatic source archive is not the installation package.
 
 Public CI ZIP SHA256: `74e5198a455aa0e07f923774ab38182011fa828c50f8476f6202c0f6f7c4386f`.
 
@@ -24,7 +24,7 @@ The existing Lunixi form is embedded by default; hosted checkout is optional. En
 
 ## Build the installable ZIP
 
-Maintainers need .NET 9 SDK and Python 3.10+. The bootstrap uses checksum-pinned official nopCommerce 4.90.8 references. The default SDK dependency is `Lunixi.Sdk` 1.0.1 from NuGet.org. Release acceptance requires a verified published package and reviewed registry package hash:
+Maintainers need .NET 9 SDK and Python 3.10+. The bootstrap uses checksum-pinned official nopCommerce 4.90.8 references. The default SDK dependency is the published `Lunixi.Sdk` 1.0.1 package from NuGet.org, whose registry package hash is verified in the committed lock:
 
 ```bash
 python3 scripts/bootstrap.py
