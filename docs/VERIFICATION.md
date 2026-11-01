@@ -1,4 +1,4 @@
-# Verification and release inputs — 1.0.1
+# Verification and release inputs — 1.0.2
 
 The default build and public CI request `Lunixi.Sdk` 1.0.1 from NuGet.org. Registry release acceptance requires its real package bytes and committed content hash, not a same-version local package. NuGet.org-only restore and `.cache/registry-mode-packages` isolate this path from source-mode and local-package development. No marketplace approval is inferred.
 
@@ -15,7 +15,7 @@ python3 scripts/build.py
 dotnet test tests/Lunixi.NopCommerce.Tests/Lunixi.NopCommerce.Tests.csproj -c Release --no-restore
 ```
 
-The empty-cache regression copies only source and restores from NuGet.org without a pre-existing feed, SDK checkout or package cache. The committed registry locks are updated only from the published package, then verified again with `--locked-mode`. A missing package, mismatched content hash or audit warning fails closed. Publication-stage results are recorded separately; the historical 0.x results below do not establish 1.0.1 acceptance.
+The empty-cache regression copies only source and restores from NuGet.org without a pre-existing feed, SDK checkout or package cache. The committed registry locks are updated only from the published package, then verified again with `--locked-mode`. A missing package, mismatched content hash or audit warning fails closed. Publication-stage results are recorded separately; the historical 0.x results below do not establish 1.0.2 acceptance.
 
 Explicit development overrides remain available: `--sdk-source` uses `packages.sdk-source.lock.json`; `--sdk-package` records the supplied artifact digest and uses isolated `packages.sdk-local.lock.json` files. No default build downloads a moving source branch or selects a local feed implicitly.
 

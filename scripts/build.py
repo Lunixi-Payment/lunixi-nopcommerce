@@ -71,7 +71,7 @@ def main():
             candidate = packages / name / version / filename
             if candidate.exists():
                 shutil.copy2(candidate, notices / (name + "-" + filename))
-    for filename in ("LICENSE", "README.md", "CHANGELOG.md", "SECURITY.md"):
+    for filename in ("LICENSE", "README.md", "CHANGELOG.md", "SECURITY.md", "MIGRATION-1.0.md"):
         shutil.copy2(ROOT / filename, destination)
     readme = destination / "README.md"
     readme.write_text(readme.read_text().replace("src/Nop.Plugin.Payments.Lunixi/Assets/", "Assets/"))
@@ -81,9 +81,9 @@ def main():
     else:
         shutil.copy2(packages / f"lunixi.sdk/{SDK_VERSION}/LICENSE", notices / "Lunixi.Sdk-LICENSE")
     metadata = json.loads((destination / "plugin.json").read_text())
-    if metadata["SystemName"] != "Payments.Lunixi" or metadata["Version"] != "1.0.1" or metadata["SupportedVersions"] != ["4.90"]:
+    if metadata["SystemName"] != "Payments.Lunixi" or metadata["Version"] != "1.0.2" or metadata["SupportedVersions"] != ["4.90"]:
         raise ValueError("Plugin manifest drift")
-    target = artifacts / "Lunixi.Payments.nopCommerce.4.90-1.0.1.zip"
+    target = artifacts / "Lunixi.Payments.nopCommerce.4.90-1.0.2.zip"
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
         for file in sorted(destination.rglob("*")):
             if file.is_file():

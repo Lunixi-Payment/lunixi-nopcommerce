@@ -102,6 +102,8 @@ jobs:
                   raise SystemExit("Merchant archive exceeds the release bound.")
               if archive.testzip() is not None:
                   raise SystemExit("Merchant archive CRC verification failed.")
+              if "Payments.Lunixi/MIGRATION-1.0.md" not in archive.namelist():
+                  raise SystemExit("Merchant archive must include the money-string migration guide.")
           output = Path("release-assets")
           output.mkdir()
           shutil.copyfile(source, output / name)
@@ -165,6 +167,8 @@ jobs:
           with zipfile.ZipFile(asset) as archive:
               if len(archive.infolist()) > 20000 or sum(item.file_size for item in archive.infolist()) > 1024 * 1024 * 1024 or archive.testzip() is not None:
                   raise SystemExit("Invalid merchant ZIP; artifact contents are never executed.")
+              if "Payments.Lunixi/MIGRATION-1.0.md" not in archive.namelist():
+                  raise SystemExit("Merchant archive must include the money-string migration guide.")
           with Path(os.environ["GITHUB_OUTPUT"]).open("a") as output:
               output.write("version=" + version + "\nzip_name=" + name + "\n")
           notes = "Merchant installation ZIP and SHA256SUMS from the fully passing workflow run.\n\n"
@@ -182,7 +186,27 @@ jobs:
         run: |
           set -euo pipefail
           tag="v$RELEASE_VERSION"
-          gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" > /dev/null
+          python3 - <<'PY_GATE'
+          import json, os, re, subprocess
+          repo, version, source = os.environ['GITHUB_REPOSITORY'], os.environ['RELEASE_VERSION'], os.environ['GITHUB_SHA']
+          if not re.fullmatch(r'(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)', version) or not re.fullmatch(r'[0-9a-f]{40}', source):
+              raise SystemExit('Invalid trusted release identity.')
+          def api(path):
+              result = subprocess.run(['gh', 'api', 'repos/' + repo + '/' + path], check=True, capture_output=True, text=True)
+              return json.loads(result.stdout)
+          obj = api('git/ref/tags/v' + version)['object']
+          for _ in range(4):
+              if not re.fullmatch(r'[0-9a-f]{40}', obj['sha']):
+                  raise SystemExit('Invalid release tag object.')
+              if obj['type'] == 'commit':
+                  break
+              if obj['type'] != 'tag':
+                  raise SystemExit('Release tag does not identify a commit.')
+              obj = api('git/tags/' + obj['sha'])['object']
+          if obj['type'] != 'commit' or obj['sha'] != source:
+              raise SystemExit('Version tag differs from the tested source commit; refusing publication.')
+          print('Existing version tag identifies the exact tested source commit.')
+          PY_GATE
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             echo 'Release already exists; refusing to overwrite it.' >&2
             exit 1

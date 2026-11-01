@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2 — 2026-11-01
+
+- Include the canonical money-string migration guide in the standalone merchant ZIP and require it at both artifact and publication gates.
+- Require the tested source commit to match the release tag before publishing the immutable ZIP.
+
 ## 1.0.1 — 2026-11-01
 
 - Align the money-string regression test with the enforced formatter; retain the exact monetary validation and actual NuGet 1.0.1 dependency.
