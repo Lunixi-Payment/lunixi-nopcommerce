@@ -41,7 +41,7 @@ public interface ILunixiGateway : IDisposable
     Task<GatewayReply> CreateIntentAsync(JsonElement body, string operationKey, CancellationToken cancellationToken);
     Task<GatewayReply> GetPaymentAsync(string paymentId, CancellationToken cancellationToken);
     Task<GatewayReply> GetSplitAsync(string splitId, CancellationToken cancellationToken);
-    Task<GatewayReply> MutateAsync(string paymentId, string operation, long? amount, string operationKey, CancellationToken cancellationToken);
+    Task<GatewayReply> MutateAsync(string paymentId, string operation, string? amount, string operationKey, CancellationToken cancellationToken);
     VerifiedDelivery VerifyWebhook(byte[] body, IEnumerable<KeyValuePair<string, string>> headers, string secret);
 }
 

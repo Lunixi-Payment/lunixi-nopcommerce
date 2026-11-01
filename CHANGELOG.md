@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0 — 2026-11-01
+
+- Breaking: use the 1.0.0 SDK canonical minor-string API; reject numeric monetary evidence.
+- Exact decimal text and currency conversion; see [migration](MIGRATION-1.0.md).
+
 ## 0.1.2 — 2026-10-31
 
 - Default new checkout configuration to the existing Lunixi form on the merchant site; retain the optional hosted selector and explicit merchant settings.

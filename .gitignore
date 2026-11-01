@@ -11,3 +11,4 @@ TestResults/
 .DS_Store
 __pycache__/
 *.pyc
+**/packages.sdk-local.lock.json

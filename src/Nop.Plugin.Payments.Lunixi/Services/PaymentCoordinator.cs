@@ -65,14 +65,14 @@ public sealed class PaymentCoordinator(PaymentLedger ledger, CredentialProfiles 
             Prefill("zipCode", address.ZipPostalCode, 20); Prefill("ip", order.CustomerIp, 64);
             var body = new Dictionary<string, object>
             {
-                ["amount"] = identity.AmountMinor,
+                ["amount"] = identity.AmountMinor.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 ["currency"] = identity.Currency,
                 ["orderId"] = identity.Reference,
                 ["callbackUrl"] = callbackUrl,
                 ["preauth"] = config.Preauthorize,
                 ["buyer"] = buyer,
                 ["locale"] = language?.LanguageCulture.StartsWith("tr", StringComparison.OrdinalIgnoreCase) == true ? "tr" : "en",
-                ["basketItems"] = new[] { new { id = identity.Reference, name = order.CustomOrderNumber, price = identity.AmountMinor, itemType = "PHYSICAL" } },
+                ["basketItems"] = new[] { new { id = identity.Reference, name = order.CustomOrderNumber, price = identity.AmountMinor.ToString(System.Globalization.CultureInfo.InvariantCulture), itemType = "PHYSICAL" } },
                 ["metadata"] = metadata,
             };
             var line = string.Join(' ', new[] { address.Address1, address.Address2 }.Where(v => !string.IsNullOrWhiteSpace(v)));
@@ -226,7 +226,7 @@ public sealed class PaymentCoordinator(PaymentLedger ledger, CredentialProfiles 
         var profile = await profiles.GetAsync(attempt.ProfileId);
         try
         {
-            await gateways.Create(profile.Credentials).MutateAsync(attempt.PaymentId!, kind, kind == "void" ? null : amount, operation.Key, cancellationToken);
+            await gateways.Create(profile.Credentials).MutateAsync(attempt.PaymentId!, kind, kind == "void" ? null : amount.ToString(System.Globalization.CultureInfo.InvariantCulture), operation.Key, cancellationToken);
             var after = await ReadSettlement(attempt, cancellationToken);
             if (!OperationComplete(operation, after)) throw new GatewayFault("outcome_pending", outcomeUnknown: true);
             var nativeApply = await ledger.WithOrderAsync(orderId, async () =>

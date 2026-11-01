@@ -1,14 +1,17 @@
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="src/Nop.Plugin.Payments.Lunixi/Assets/lunixi-logo-dark.svg"><img src="src/Nop.Plugin.Payments.Lunixi/Assets/lunixi-logo.svg" alt="Lunixi" width="240"></picture></p>
 
+
+**1.0.0 requires the canonical money-string SDK.** The default build restores `Lunixi.Sdk` 1.0.1 from NuGet.org using the committed package lock; registry publication must be verified before release acceptance. See [migration](MIGRATION-1.0.md). Historical 0.x assets do not implement this API cut.
+
 # Lunixi Payments for nopCommerce
 
-**Verified public merchant ZIP 0.1.2:** [`Lunixi.Payments.nopCommerce.4.90-0.1.2.zip`](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip) · [SHA256SUMS](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/SHA256SUMS) · [Release v0.1.2](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/tag/v0.1.2). The CI-built installation package was downloaded and verified on 2026-10-31. Use this asset rather than GitHub's automatic source archive.
+**Historical merchant ZIP 0.1.2:** [`Lunixi.Payments.nopCommerce.4.90-0.1.2.zip`](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip) was downloaded and verified on 2026-10-31. It does not implement the 1.0.0 money contract. Install the tested 1.0.0 merchant ZIP only after its release publication is verified; GitHub’s automatic source archive is not the installation package.
 
 Public CI ZIP SHA256: `74e5198a455aa0e07f923774ab38182011fa828c50f8476f6202c0f6f7c4386f`.
 
 The existing Lunixi form opens **on the merchant website by default**. Hosted checkout remains optional and uses only the validated backend `paymentPageUrl`. Its opaque token can differ from the embedded token; the module never builds this URL from that token. Missing or legacy URLs keep embedded checkout available; hosted checkout stays on hold/reconciliation without a new intent or key. Existing attempts keep their saved mode, request body, profile and key. The official form/panel controls available methods and multi-card options.
 
-Native payment plugin **0.1.2** for the nopCommerce **4.90 API line**, verified against official **4.90.8** assemblies and .NET 9. The plugin uses the shared [Lunixi .NET SDK](https://github.com/Lunixi-Payment/lunixi-dotnet) for signing, authentication, payment transport and webhook verification. No raw-card form is implemented by the merchant server.
+Native payment plugin **1.0.0** for the nopCommerce **4.90 API line**, verified against official **4.90.8** assemblies and .NET 9. The plugin uses the shared [Lunixi .NET SDK](https://github.com/Lunixi-Payment/lunixi-dotnet) for signing, authentication, payment transport and webhook verification. No raw-card form is implemented by the merchant server.
 
 The existing Lunixi form is embedded by default; hosted checkout is optional. Enabled methods, installments, insurance and split availability are controlled in your Lunixi panel; the plugin does not duplicate those switches.
 
@@ -21,16 +24,16 @@ The existing Lunixi form is embedded by default; hosted checkout is optional. En
 
 ## Build the installable ZIP
 
-Maintainers need .NET 9 SDK and Python 3.10+. The default bootstrap downloads checksum-pinned official nopCommerce 4.90.8 references and the public `lunixi-dotnet` v0.1.0 source tag:
+Maintainers need .NET 9 SDK and Python 3.10+. The bootstrap uses checksum-pinned official nopCommerce 4.90.8 references. The default SDK dependency is `Lunixi.Sdk` 1.0.1 from NuGet.org. Release acceptance requires a verified published package and reviewed registry package hash:
 
 ```bash
 python3 scripts/bootstrap.py
 python3 scripts/build.py --restore
 ```
 
-An already downloaded trusted 4.90.8 NoSource directory can be supplied with `--nop-runtime`, or a reviewed SDK checkout with `--sdk-source`. An explicitly supplied local `Lunixi.Sdk.0.1.0.nupkg` can be selected with `--sdk-package`. The default pinned source/project-reference build does not require a NuGet.org package; the merchant ZIP already bundles the runtime dependencies.
+An already downloaded trusted 4.90.8 NoSource directory can be supplied with `--nop-runtime`. Default package restores use an isolated `.cache/registry-mode-packages` cache and NuGet.org only; an old `.cache/nuget` directory is not used implicitly. For explicit development acceptance, `--sdk-source` selects a reviewed 1.0.1 checkout and `--sdk-package` selects a reviewed local `Lunixi.Sdk.1.0.1.nupkg`. Local-package builds use their own cache and ignored `packages.sdk-local.lock.json` files, so their bytes cannot replace registry locks. The merchant ZIP bundles runtime dependencies and needs no restore on the merchant server.
 
-Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip` and its SHA-256 file. The archive has one root directory, `Payments.Lunixi`, matching the native upload contract. Platform assemblies are compile/test references and are not redistributed in the plugin ZIP.
+Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-1.0.0.zip` and its SHA-256 file. The archive has one root directory, `Payments.Lunixi`, matching the native upload contract. Platform assemblies are compile/test references and are not redistributed in the plugin ZIP.
 
 ## Install and configure
 
@@ -59,7 +62,7 @@ The scheduled task polls unresolved and settled attempts without starving newer 
 
 ## Lifecycle and support
 
-Uninstall disables the plugin task and preserves financial attempts, operations, inbox, settings and encrypted credential profiles. Keep the server key and necessary merchant credentials through refund/dispute retention. Recurring payments are not implemented in 0.1.2. Generic SDK product access does not imply native integration for every separate Lunixi product.
+Uninstall disables the plugin task and preserves financial attempts, operations, inbox, settings and encrypted credential profiles. Keep the server key and necessary merchant credentials through refund/dispute retention. Recurring payments are not implemented in this release. Generic SDK product access does not imply native integration for every separate Lunixi product.
 
 English and Turkish resources use native localization. The plugin ships the original Lunixi logos. Report vulnerabilities privately through [SECURITY.md](SECURITY.md); never send real credentials or buyer data in issues.
 

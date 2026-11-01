@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Nop.Plugin.Payments.Lunixi/Nop.Plugin.Payments.Lunixi.csproj" Private="false" />
-    <PackageReference Include="Lunixi.Sdk" Version="0.1.0" Condition="'$(UseLunixiSdkPackage)' == 'true'" />
+    <PackageReference Include="Lunixi.Sdk" Version="$(LunixiSdkVersion)" Condition="'$(UseLunixiSdkPackage)' == 'true'" />
     <ProjectReference Include="$(LunixiSdkProject)" Condition="'$(UseLunixiSdkPackage)' != 'true'" />
   </ItemGroup>
 </Project>

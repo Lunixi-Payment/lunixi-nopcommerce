@@ -15,7 +15,7 @@ public class PaymentEvidenceTests
 {
     internal static readonly OrderIdentity Identity = new("merchant-1", "nop:1:order-1", 10050, "TRY");
     internal static JsonElement Payment(string status = "CAPTURED", long captured = 10050, long refunded = 0, long gross = 10050, string? fingerprint = null, string merchant = "merchant-1", object? split = null)
-        => JsonSerializer.SerializeToElement(new { data = new { id = "pay-1", merchantId = merchant, orderId = Identity.Reference, currency = "TRY", amount = gross, status, metadata = new { lunixiCommerce = new { fingerprint } }, details = new { capturedAmount = captured, refundedAmount = refunded }, split } });
+        => JsonSerializer.SerializeToElement(new { data = new { id = "pay-1", merchantId = merchant, orderId = Identity.Reference, currency = "TRY", amount = gross.ToString(System.Globalization.CultureInfo.InvariantCulture), status, metadata = new { lunixiCommerce = new { fingerprint } }, details = new { capturedAmount = captured.ToString(System.Globalization.CultureInfo.InvariantCulture), refundedAmount = refunded.ToString(System.Globalization.CultureInfo.InvariantCulture) }, split } });
 
     [Fact]
     public void RealNativePaymentInterfaceIsImplemented() => Assert.True(typeof(IPaymentMethod).IsAssignableFrom(typeof(LunixiPaymentProcessor)));
@@ -46,7 +46,7 @@ public class PaymentEvidenceTests
     {
         var parent = Payment("SETTLED_BY_SPLIT", split: new { role = "PARENT", splitPaymentId = "split-1" });
         JsonElement Aggregate(long captured, bool balanced = true, bool review = false) => JsonSerializer.SerializeToElement(new
-        { data = new { id = "split-1", orderId = Identity.Reference, currency = "TRY", status = "COMPLETED", needsReconciliation = review, aggregate = new { totalAmount = 10050, legsAmount = 10050, capturedAmount = captured, compensatedAmount = 0, authorizedAmount = 0, amountsBalanced = balanced }, refund = new { refundedAmount = 0 } } });
+        { data = new { id = "split-1", orderId = Identity.Reference, currency = "TRY", status = "COMPLETED", needsReconciliation = review, aggregate = new { totalAmount = "10050", legsAmount = "10050", capturedAmount = captured.ToString(System.Globalization.CultureInfo.InvariantCulture), compensatedAmount = "0", authorizedAmount = "0", amountsBalanced = balanced }, refund = new { refundedAmount = "0" } } });
         Assert.Throws<PaymentReviewException>(() => PaymentEvidence.Evaluate(Identity, "pay-1", parent));
         Assert.Equal("pending", PaymentEvidence.Evaluate(Identity, "pay-1", parent, Aggregate(500)).State);
         Assert.Throws<PaymentReviewException>(() => PaymentEvidence.Evaluate(Identity, "pay-1", parent, Aggregate(10050, balanced: false)));
@@ -65,7 +65,7 @@ public class PaymentEvidenceTests
     public void FractionalMinorAndUnsafeValuesAreRejected()
     {
         Assert.Throws<PaymentReviewException>(() => MinorMoney.FromDecimal(1.001m, "TRY"));
-        Assert.Throws<PaymentReviewException>(() => MinorMoney.FromDecimal(90_071_992_547_409.92m, "TRY"));
+        Assert.Throws<PaymentReviewException>(() => MinorMoney.FromDecimal(92_233_720_368_547_758.08m, "TRY"));
         Assert.Throws<PaymentReviewException>(() => MinorMoney.FromDecimal(-1m, "TRY"));
     }
     [Fact]

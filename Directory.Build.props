@@ -7,15 +7,21 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Deterministic>true</Deterministic>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <LunixiSdkVersion>1.0.1</LunixiSdkVersion>
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
     <NopRuntimePath Condition="'$(NopRuntimePath)' == ''">$(NOP_RUNTIME_PATH)</NopRuntimePath>
     <NopRuntimePath Condition="'$(NopRuntimePath)' == ''">$(MSBuildThisFileDirectory).cache/nop-4.90.8</NopRuntimePath>
-    <RestoreAdditionalProjectSources Condition="Exists('$(MSBuildThisFileDirectory).cache/nuget')">$(MSBuildThisFileDirectory).cache/nuget</RestoreAdditionalProjectSources>
+    <RestoreAdditionalProjectSources Condition="'$(LunixiSdkLocalFeed)' != ''">$(LunixiSdkLocalFeed)</RestoreAdditionalProjectSources>
     <LunixiSdkProject Condition="'$(LunixiSdkProject)' == ''">$(LUNIXI_SDK_PROJECT)</LunixiSdkProject>
-    <LunixiSdkProject Condition="'$(LunixiSdkProject)' == ''">$(MSBuildThisFileDirectory).cache/lunixi-dotnet/src/Lunixi.Sdk/Lunixi.Sdk.csproj</LunixiSdkProject>
-    <UseLunixiSdkPackage Condition="'$(UseLunixiSdkPackage)' == ''">false</UseLunixiSdkPackage>
+    <UseLunixiSdkPackage Condition="'$(UseLunixiSdkPackage)' == '' and '$(LunixiSdkProject)' != ''">false</UseLunixiSdkPackage>
+    <UseLunixiSdkPackage Condition="'$(UseLunixiSdkPackage)' == ''">true</UseLunixiSdkPackage>
+    <RestoreSources Condition="'$(UseLunixiSdkPackage)' == 'true' and '$(LunixiSdkLocalFeed)' == ''">https://api.nuget.org/v3/index.json</RestoreSources>
+    <RestoreAdditionalProjectSources Condition="'$(UseLunixiSdkPackage)' == 'true' and '$(LunixiSdkLocalFeed)' == ''"></RestoreAdditionalProjectSources>
     <NuGetLockFilePath Condition="'$(UseLunixiSdkPackage)' != 'true'">packages.sdk-source.lock.json</NuGetLockFilePath>
+    <NuGetLockFilePath Condition="'$(UseLunixiSdkPackage)' == 'true' and '$(LunixiSdkLocalFeed)' != ''">packages.sdk-local.lock.json</NuGetLockFilePath>
+    <RestorePackagesPath Condition="'$(UseLunixiSdkPackage)' == 'true' and '$(NUGET_PACKAGES)' == '' and '$(LunixiSdkLocalFeed)' == ''">$(MSBuildThisFileDirectory).cache/registry-mode-packages</RestorePackagesPath>
+    <RestorePackagesPath Condition="'$(UseLunixiSdkPackage)' == 'true' and '$(NUGET_PACKAGES)' == '' and '$(LunixiSdkLocalFeed)' != ''">$(MSBuildThisFileDirectory).cache/package-mode-packages</RestorePackagesPath>
     <PathMap>$(MSBuildThisFileDirectory)=/_/lunixi-nopcommerce/</PathMap>
   </PropertyGroup>
 </Project>

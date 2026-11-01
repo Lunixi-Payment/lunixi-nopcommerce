@@ -20,14 +20,18 @@ public sealed class GatewayClient : ILunixiGateway
         => Call(() => client.Payments.GetAsync(paymentId, cancellationToken));
     public Task<GatewayReply> GetSplitAsync(string splitId, CancellationToken cancellationToken)
         => Call(() => client.Payments.GetSplitAsync(splitId, cancellationToken));
-    public Task<GatewayReply> MutateAsync(string paymentId, string operation, long? amount, string operationKey, CancellationToken cancellationToken)
+    public Task<GatewayReply> MutateAsync(string paymentId, string operation, string? amount, string operationKey, CancellationToken cancellationToken)
         => operation switch
         {
-            "capture" => Call(() => client.Payments.CaptureAsync(paymentId, operationKey, amount, cancellationToken)),
-            "refund" => Call(() => client.Payments.RefundAsync(paymentId, operationKey, amount, cancellationToken: cancellationToken)),
+            // PaymentCoordinator resolves and persists the native remaining amount before this boundary.
+            // Null belongs only to void; it must never turn a missing capture/refund amount into full settlement.
+            "capture" => Call(() => client.Payments.CaptureAsync(paymentId, operationKey, RequiredAmount(amount), cancellationToken)),
+            "refund" => Call(() => client.Payments.RefundAsync(paymentId, operationKey, RequiredAmount(amount), cancellationToken: cancellationToken)),
             "void" => Call(() => client.Payments.VoidAsync(paymentId, operationKey, cancellationToken)),
             _ => throw new InvalidOperationException("Unsupported financial operation."),
         };
+    private static string RequiredAmount(string? amount)
+        => amount ?? throw new LunixiConfigurationException("Native financial operation requires a resolved amount.");
     public VerifiedDelivery VerifyWebhook(byte[] body, IEnumerable<KeyValuePair<string, string>> headers, string secret)
     {
         try

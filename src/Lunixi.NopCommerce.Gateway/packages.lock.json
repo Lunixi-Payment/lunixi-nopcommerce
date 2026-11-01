@@ -4,9 +4,9 @@
     "net9.0": {
       "Lunixi.Sdk": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "LCSPg41Jk3+E97XgtBMZQZqKNiLnqQo8CC4gdNSPF2dx+/BuF2YPpFMPskNyIOikIBU89xc1IZE6Z6+UsAOWvw==",
+        "requested": "[1.0.1, )",
+        "resolved": "1.0.1",
+        "contentHash": "GTZx6CHL4Khu6y5yCXyVhXnePB11d3raFdPeC8V7oaBZ19dLE4yM+CzRKqPTE04H/Sopu4P9fC1bPVitmXClsg==",
         "dependencies": {
           "NSec.Cryptography": "25.4.0"
         }

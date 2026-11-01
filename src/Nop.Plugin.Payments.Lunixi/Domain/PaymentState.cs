@@ -12,7 +12,7 @@ public sealed class PaymentReviewException : Exception
 
 public static class MinorMoney
 {
-    public const long Maximum = 9_007_199_254_740_991;
+    public const long Maximum = long.MaxValue;
     private static readonly HashSet<string> Zero = ["BIF", "CLP", "DJF", "GNF", "ISK", "JPY", "KMF", "KRW", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF"];
     private static readonly HashSet<string> Three = ["BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND"];
     public static int Exponent(string currency)
@@ -20,19 +20,23 @@ public static class MinorMoney
         if (currency.Length != 3 || currency.Any(c => !char.IsAsciiLetterUpper(c)) || currency is "CLF" or "UYW") throw new PaymentReviewException();
         return Zero.Contains(currency) ? 0 : Three.Contains(currency) ? 3 : 2;
     }
-    public static long FromDecimal(decimal amount, string currency)
+    public static long FromDecimal(decimal amount, string currency) => FromDecimalText(amount.ToString(CultureInfo.InvariantCulture), currency);
+    public static long FromDecimalText(string amount, string currency)
     {
-        var scale = Exponent(currency) switch { 0 => 1m, 3 => 1000m, _ => 100m };
-        var value = amount * scale;
-        if (value < 0 || value > Maximum || decimal.Truncate(value) != value) throw new PaymentReviewException();
-        return (long)value;
+        var exponent = Exponent(currency);
+        if (!System.Text.RegularExpressions.Regex.IsMatch(amount, @"\A(?:0|[1-9][0-9]*)(?:\.[0-9]+)?\z")) throw new PaymentReviewException();
+        var parts = amount.Split('.'); var fraction = parts.Length == 2 ? parts[1] : "";
+        if (fraction.Length > exponent && fraction[exponent..].Any(c => c != '0')) throw new PaymentReviewException();
+        var text = (parts[0] + fraction[..Math.Min(exponent, fraction.Length)].PadRight(exponent, '0')).TrimStart('0');
+        if (text == "") text = "0";
+        if (!long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var exact)) throw new PaymentReviewException();
+        return exact;
     }
     public static decimal ToDecimal(long amount, string currency) => amount / (Exponent(currency) switch { 0 => 1m, 3 => 1000m, _ => 100m });
     public static long JsonInteger(JsonElement element)
     {
         long amount;
-        if (element.ValueKind == JsonValueKind.Number && element.TryGetInt64(out amount) && amount is >= 0 and <= Maximum) return amount;
-        if (element.ValueKind == JsonValueKind.String && long.TryParse(element.GetString(), NumberStyles.None, CultureInfo.InvariantCulture, out amount) && amount is >= 0 and <= Maximum) return amount;
+        if (element.ValueKind == JsonValueKind.String && System.Text.RegularExpressions.Regex.IsMatch(element.GetString()!, @"\A(?:0|[1-9][0-9]*)\z") && long.TryParse(element.GetString(), NumberStyles.None, CultureInfo.InvariantCulture, out amount) && amount is >= 0 and <= Maximum) return amount;
         throw new PaymentReviewException();
     }
 }
@@ -40,7 +44,7 @@ public static class MinorMoney
 public sealed record OrderIdentity(string MerchantId, string Reference, long AmountMinor, string Currency)
 {
     public string Fingerprint => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
-    { merchantId = MerchantId, orderId = Reference, amount = AmountMinor, currency = Currency })))).ToLowerInvariant();
+    { merchantId = MerchantId, orderId = Reference, amount = AmountMinor.ToString(CultureInfo.InvariantCulture), currency = Currency })))).ToLowerInvariant();
 }
 
 public sealed record Settlement(string State, long GrossMinor, long CapturedMinor, long RefundedMinor, string? SplitId = null);

@@ -94,27 +94,27 @@ internal sealed class FakeGateway : ILunixiGateway
     public Task<GatewayReply> GetPaymentAsync(string paymentId, CancellationToken cancellationToken)
     {
         if (paymentId != "pay-1") throw new GatewayFault(statusCode: 404);
-        var amount = body.GetProperty("amount").GetInt64() + Fee;
+        var amount = MinorMoney.JsonInteger(body.GetProperty("amount")) + Fee;
         return Task.FromResult(Reply(new
         {
             id = "pay-1",
             merchantId = MerchantId,
             orderId = body.GetProperty("orderId").GetString(),
             currency = body.GetProperty("currency").GetString(),
-            amount,
+            amount = amount.ToString(System.Globalization.CultureInfo.InvariantCulture),
             status = Status,
             metadata = body.GetProperty("metadata"),
-            details = new { capturedAmount = Status is "AUTHORIZED" or "VOIDED" or "EXPIRED" or "FAILED" ? 0 : amount, refundedAmount = Refunded }
+            details = new { capturedAmount = (Status is "AUTHORIZED" or "VOIDED" or "EXPIRED" or "FAILED" ? 0 : amount).ToString(System.Globalization.CultureInfo.InvariantCulture), refundedAmount = Refunded.ToString(System.Globalization.CultureInfo.InvariantCulture) }
         }));
     }
     public Task<GatewayReply> GetSplitAsync(string splitId, CancellationToken cancellationToken) => throw new GatewayFault("not_configured");
-    public async Task<GatewayReply> MutateAsync(string paymentId, string operation, long? amount, string key, CancellationToken cancellationToken)
+    public async Task<GatewayReply> MutateAsync(string paymentId, string operation, string? amount, string key, CancellationToken cancellationToken)
     {
         MutationKeys.Add(key);
         if (MutationGate is not null) await MutationGate.Task.WaitAsync(cancellationToken);
         if (operation == "capture") Status = "CAPTURED";
         if (operation == "void") Status = "VOIDED";
-        if (operation == "refund") { Refunded += amount!.Value; Status = Refunded == body.GetProperty("amount").GetInt64() + Fee ? "REFUNDED" : "PARTIALLY_REFUNDED"; }
+        if (operation == "refund") { Refunded += long.Parse(amount!, System.Globalization.CultureInfo.InvariantCulture); Status = Refunded == MinorMoney.JsonInteger(body.GetProperty("amount")) + Fee ? "REFUNDED" : "PARTIALLY_REFUNDED"; }
         if (FailMutationOnce) { FailMutationOnce = false; throw new GatewayFault(outcomeUnknown: true); }
         return Reply(new { status = "PENDING" }); // The coordinator must ignore this and query settlement.
     }
