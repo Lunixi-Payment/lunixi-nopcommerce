@@ -22,6 +22,7 @@ using Nop.Plugin.Payments.Lunixi.Data;
 using Nop.Plugin.Payments.Lunixi.Domain;
 using Nop.Plugin.Payments.Lunixi.Services;
 using Nop.Services.Catalog;
+using Nop.Services.Common;
 using Nop.Services.Html;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
@@ -43,6 +44,7 @@ internal sealed class NativeDatabase
     public readonly Mock<IEventPublisher> Publisher = new() { DefaultValueProvider = EmptyDefaults.Instance };
     public int PaidEvents { get; private set; }
     public Mock<IPaymentService> Payments { get; } = new() { DefaultValueProvider = EmptyDefaults.Instance };
+    public Mock<IGenericAttributeService> Attributes { get; } = new() { DefaultValueProvider = EmptyDefaults.Instance };
     private readonly DataConfig configuration;
 
     public NativeDatabase()
@@ -78,7 +80,7 @@ internal sealed class NativeDatabase
         var args = constructor.GetParameters().Select(parameter => parameter.ParameterType == typeof(IOrderService) ? Orders :
             parameter.ParameterType == typeof(IEventPublisher) ? Publisher.Object : parameter.ParameterType == typeof(IPaymentService) ? Payments.Object : EmptyDefaults.Value(parameter.ParameterType)).ToArray();
         Processing = (IOrderProcessingService)constructor.Invoke(args);
-        Native = new(Provider, Orders, Processing, Publisher.Object);
+        Native = new(Provider, Orders, Processing, Publisher.Object, Attributes.Object);
     }
     private IRepository<T> Repository<T>() where T : BaseEntity
     {
@@ -127,6 +129,8 @@ internal sealed class NativeDatabase
         await Ledger.WithOrderAsync(order.Id, async () => { attempt.Id = await Ledger.AddAttemptAsync(attempt); await Ledger.BindPaymentAsync(attempt, "pay-" + order.Id, "synthetic-token-cipher"); return true; });
         attempt.PaymentId = "pay-" + order.Id; return attempt;
     }
+    public async Task<List<string>> Notes(int orderId)
+        => await LinqToDB.AsyncExtensions.ToListAsync(Provider.GetTable<OrderNote>().Where(n => n.OrderId == orderId).Select(n => n.Note));
     public async Task<long> Count(string table) => Convert.ToInt64(await Scalar("SELECT COUNT(*) FROM `" + table + "`"));
     public async Task Execute(string sql)
     {

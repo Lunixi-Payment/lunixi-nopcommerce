@@ -1,17 +1,17 @@
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="src/Nop.Plugin.Payments.Lunixi/Assets/lunixi-logo-dark.svg"><img src="src/Nop.Plugin.Payments.Lunixi/Assets/lunixi-logo.svg" alt="Lunixi" width="240"></picture></p>
 
 
-**1.0.2 requires the canonical money-string SDK.** The default build restores the published [Lunixi.Sdk 1.0.1 package from NuGet.org](https://www.nuget.org/packages/Lunixi.Sdk/1.0.1) using the committed package lock and verified registry hash. See [migration](MIGRATION-1.0.md). Historical 0.x assets do not implement this API cut.
+**1.1.0 requires the canonical money-string SDK.** The default build restores the published [Lunixi.Sdk 1.3.0 package from NuGet.org](https://www.nuget.org/packages/Lunixi.Sdk/1.3.0) using the committed package lock and verified registry hash. See [migration](MIGRATION-1.0.md). Historical 0.x assets do not implement this API cut.
 
 # Lunixi Payments for nopCommerce
 
-**Historical merchant ZIP 0.1.2:** [`Lunixi.Payments.nopCommerce.4.90-0.1.2.zip`](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip) was downloaded and verified on 2026-10-31. It does not implement the 1.0.2 money contract. Install the published merchant ZIP from [GitHub Release v1.0.2](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/tag/v1.0.2) with its matching release checksum; GitHub’s automatic source archive is not the installation package.
+**Historical merchant ZIP 0.1.2:** [`Lunixi.Payments.nopCommerce.4.90-0.1.2.zip`](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/download/v0.1.2/Lunixi.Payments.nopCommerce.4.90-0.1.2.zip) was downloaded and verified on 2026-10-31. It does not implement the 1.x money contract. Install the published merchant ZIP from [GitHub Release v1.1.0](https://github.com/Lunixi-Payment/lunixi-nopcommerce/releases/tag/v1.1.0) with its matching release checksum; GitHub’s automatic source archive is not the installation package.
 
-Public CI ZIP SHA256: `74e5198a455aa0e07f923774ab38182011fa828c50f8476f6202c0f6f7c4386f`.
+Public CI ZIP SHA256 (v1.0.2): `74e5198a455aa0e07f923774ab38182011fa828c50f8476f6202c0f6f7c4386f`.
 
 The existing Lunixi form opens **on the merchant website by default**. Hosted checkout remains optional and uses only the validated backend `paymentPageUrl`. Its opaque token can differ from the embedded token; the module never builds this URL from that token. Missing or legacy URLs keep embedded checkout available; hosted checkout stays on hold/reconciliation without a new intent or key. Existing attempts keep their saved mode, request body, profile and key. The official form/panel controls available methods and multi-card options.
 
-Native payment plugin **1.0.2** for the nopCommerce **4.90 API line**, verified against official **4.90.8** assemblies and .NET 9. The plugin uses the shared [Lunixi .NET SDK](https://github.com/Lunixi-Payment/lunixi-dotnet) for signing, authentication, payment transport and webhook verification. No raw-card form is implemented by the merchant server.
+Native payment plugin **1.1.0** for the nopCommerce **4.90 API line**, verified against official **4.90.8** assemblies and .NET 9. The plugin uses the shared [Lunixi .NET SDK](https://github.com/Lunixi-Payment/lunixi-dotnet) for signing, authentication, payment transport and webhook verification. No raw-card form is implemented by the merchant server.
 
 The existing Lunixi form is embedded by default; hosted checkout is optional. Enabled methods, installments, insurance and split availability are controlled in your Lunixi panel; the plugin does not duplicate those switches.
 
@@ -24,16 +24,16 @@ The existing Lunixi form is embedded by default; hosted checkout is optional. En
 
 ## Build the installable ZIP
 
-Maintainers need .NET 9 SDK and Python 3.10+. The bootstrap uses checksum-pinned official nopCommerce 4.90.8 references. The default SDK dependency is the published `Lunixi.Sdk` 1.0.1 package from NuGet.org, whose registry package hash is verified in the committed lock:
+Maintainers need .NET 9 SDK and Python 3.10+. The bootstrap uses checksum-pinned official nopCommerce 4.90.8 references. The default SDK dependency is the published `Lunixi.Sdk` 1.3.0 package from NuGet.org, whose registry package hash is verified in the committed lock:
 
 ```bash
 python3 scripts/bootstrap.py
 python3 scripts/build.py --restore
 ```
 
-An already downloaded trusted 4.90.8 NoSource directory can be supplied with `--nop-runtime`. Default package restores use an isolated `.cache/registry-mode-packages` cache and NuGet.org only; an old `.cache/nuget` directory is not used implicitly. For explicit development acceptance, `--sdk-source` selects a reviewed 1.0.1 SDK checkout and `--sdk-package` selects a reviewed local `Lunixi.Sdk.1.0.1.nupkg`. Local-package builds use their own cache and ignored `packages.sdk-local.lock.json` files, so their bytes cannot replace registry locks. The merchant ZIP bundles runtime dependencies and needs no restore on the merchant server.
+An already downloaded trusted 4.90.8 NoSource directory can be supplied with `--nop-runtime`. Default package restores use an isolated `.cache/registry-mode-packages` cache and NuGet.org only; an old `.cache/nuget` directory is not used implicitly. For explicit development acceptance, `--sdk-source` selects a reviewed 1.3.0 SDK checkout and `--sdk-package` selects a reviewed local `Lunixi.Sdk.1.3.0.nupkg`. Local-package builds use their own cache and ignored `packages.sdk-local.lock.json` files, so their bytes cannot replace registry locks. The merchant ZIP bundles runtime dependencies and needs no restore on the merchant server.
 
-Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-1.0.2.zip` and its SHA-256 file. The archive has one root directory, `Payments.Lunixi`, matching the native upload contract. Platform assemblies are compile/test references and are not redistributed in the plugin ZIP.
+Output: `artifacts/Lunixi.Payments.nopCommerce.4.90-1.1.0.zip` and its SHA-256 file. The archive has one root directory, `Payments.Lunixi`, matching the native upload contract. Platform assemblies are compile/test references and are not redistributed in the plugin ZIP.
 
 ## Install and configure
 
@@ -57,6 +57,14 @@ Captured legs never fulfill an order. Split fulfillment requires the correct par
 Native capture/refund/void methods require native order-edit capability. Core admin actions retain their native CSRF gates. Stable operation IDs are persisted before gateway calls. A mutation response alone cannot report success: complete authenticated settlement evidence must confirm it. Partial refunds use exact primary-currency minor units; the final basket refund includes any remaining authenticated installment fee.
 
 nopCommerce writes native financial state after `IPaymentMethod` returns. The plugin explicitly reserves that handoff, blocks webhook races, acknowledges native order events and observes response completion. Unknown outcomes reconcile by reading the gateway rather than creating a second operation. A process crash during the small native handoff window can require operator review; the plugin retains the operation and blocks blind retries. Review the native order and verified gateway settlement before resolving that condition.
+
+### Bank transfer waiting period
+
+A bank transfer (Para Transferi: havale, EFT or FAST) stays `PROCESSING` for 1–3 business days until the money reaches your bank account. The order stays pending in nopCommerce during that time; the plugin never expires or cancels it on its own. The order is marked paid only when the verified payment is captured.
+
+If you cancel such an order before the money arrives, a later capture does not reopen or pay it. The plugin adds an admin-only order note starting with `[Lunixi review <paymentId>]`, sets the `Lunixi.PaymentReview` generic attribute on the order and acknowledges the webhook. Refund the payment in the Lunixi panel, or restore the order and confirm the payment yourself.
+
+A late transfer can be accepted by Lunixi as a new payment for the same order (same order reference, new payment ID). The plugin verifies that payment with an authenticated read (merchant, order, currency, amount). If it carries funds, the plugin records the same review note and attribute with the new payment ID and does not mark the order paid; without funds, the event is acknowledged with no change. A payment that belongs to an order this store does not know is still rejected. Search for orders with the review attribute or note before fulfilling or refunding.
 
 The scheduled task polls unresolved and settled attempts without starving newer orders. Native order and inbox writes use one native database transaction with per-order row locking. Ambient transaction enlistment is mandatory; MySQL financial/order/note/email tables must be InnoDB and are checked. Native built-in notifications are queued transactionally; third-party event consumers must use a durable outbox for external side effects.
 

@@ -49,6 +49,11 @@ public sealed class PaymentLedger(NativeConnectionFactory factory)
         var rows = await Query($"SELECT * FROM {Q("LunixiAttempt")} WHERE {Q("MerchantId")}=@merchant AND {Q("PaymentId")}=@payment", ReadAttempt, ("merchant", merchantId), ("payment", paymentId));
         if (rows.Count > 1) throw new PaymentReviewException(); return rows.FirstOrDefault();
     }
+    public async Task<int?> FindOrderAsync(string merchantId, string orderReference)
+    {
+        var rows = await Query($"SELECT DISTINCT {Q("NativeOrderId")} FROM {Q("LunixiAttempt")} WHERE {Q("MerchantId")}=@merchant AND {Q("OrderReference")}=@reference", r => r.GetInt32(0), ("merchant", merchantId), ("reference", orderReference));
+        if (rows.Count > 1) throw new PaymentReviewException(); return rows.Count == 0 ? null : rows[0];
+    }
     public async Task<int> AddAttemptAsync(CheckoutAttempt value)
     {
         var columns = new[] { "NativeOrderId", "ProfileId", "OrderReference", "MerchantId", "Currency", "BaseMinor", "Fingerprint", "OperationKey", "PayloadCipher", "State", "GrossMinor", "RefundedMinor", "CreatedUtc" };

@@ -1,7 +1,9 @@
 using Moq;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
+using Nop.Core;
 using Nop.Plugin.Payments.Lunixi.Domain;
+using Nop.Plugin.Payments.Lunixi.Services;
 using Nop.Services.Payments;
 using System.Security.Cryptography;
 using System.Text;
@@ -239,5 +241,70 @@ public sealed class CoordinatorTests
         await Assert.ThrowsAsync<GatewayFault>(() => host.Coordinator.MutateAsync(host.Order.Id, "capture", null, default));
         Assert.Empty(host.Gateway.MutationKeys);
         Assert.Equal(operation.Key, (await host.Database.Ledger.GetPendingOperationAsync(attempt.Id))!.Key);
+    }
+
+    private static Task Deliver(CoordinatorHost host, string id, object data)
+    {
+        var raw = JsonSerializer.Serialize(new { id, type = "payment.captured", data });
+        var timestamp = DateTimeOffset.UtcNow.ToString("O");
+        var signature = Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(host.Credentials.WebhookSecret), Encoding.UTF8.GetBytes(id + "." + timestamp + "." + raw)));
+        var headers = new Dictionary<string, string> { ["x-lunixi-event-id"] = id, ["x-lunixi-signature-timestamp"] = timestamp, ["x-lunixi-signature"] = "v2=" + signature };
+        return host.Coordinator.ReceiveAsync(host.Config.ActiveProfileId, Encoding.UTF8.GetBytes(raw), headers, default);
+    }
+    private static async Task<int> ReviewNotes(CoordinatorHost host, string paymentId)
+        => (await host.Database.Notes(host.Order.Id)).Count(n => n.StartsWith(NativeOrders.ReviewMarker(paymentId), StringComparison.Ordinal));
+    private static void ReviewFlagged(CoordinatorHost host, string paymentId, Times times)
+        => host.Database.Attributes.Verify(a => a.SaveAttributeAsync(It.Is<BaseEntity>(e => e.Id == host.Order.Id), NativeOrders.ReviewAttribute, paymentId, It.IsAny<int>()), times);
+
+    [Fact]
+    public async Task CapturedPaymentForCancelledOrderIsFlaggedOnceAndAcknowledgedWithoutMarkingPaid()
+    {
+        var host = new CoordinatorHost(); await host.Initialize(); await host.Start();
+        var order = await host.Database.Native.GetAsync(host.Order.Id); order.OrderStatus = OrderStatus.Cancelled; await host.Database.Orders.UpdateOrderAsync(order);
+        await Deliver(host, "cancelled-" + host.Order.Id, new { paymentId = "pay-1" });
+        await Deliver(host, "cancelled-again-" + host.Order.Id, new { paymentId = "pay-1" });
+        await host.Coordinator.ReconcileAsync(host.Order.Id, default);
+        var after = await host.Database.Native.GetAsync(host.Order.Id);
+        Assert.Equal(OrderStatus.Cancelled, after.OrderStatus); Assert.Equal(PaymentStatus.Pending, after.PaymentStatus); Assert.Equal(0, host.Database.PaidEvents);
+        Assert.Equal(1, await ReviewNotes(host, "pay-1")); ReviewFlagged(host, "pay-1", Times.Once());
+    }
+
+    [Fact]
+    public async Task LinkedLatePaymentIsVerifiedFlaggedOnceAndNeverMarksTheOrderPaid()
+    {
+        var host = new CoordinatorHost(); await host.Initialize(); await host.Start();
+        host.Gateway.Status = "EXPIRED"; host.Gateway.LinkedPaymentId = "pay-late-1";
+        await Deliver(host, "late-" + host.Order.Id, new { paymentId = "pay-late-1" });
+        await Deliver(host, "late-" + host.Order.Id, new { paymentId = "pay-late-1" });
+        await Deliver(host, "late-redelivered-" + host.Order.Id, new { paymentId = "pay-late-1" });
+        var after = await host.Database.Native.GetAsync(host.Order.Id);
+        Assert.Equal(PaymentStatus.Pending, after.PaymentStatus); Assert.Equal(0, host.Database.PaidEvents);
+        Assert.Equal(1, await ReviewNotes(host, "pay-late-1")); ReviewFlagged(host, "pay-late-1", Times.Once());
+        Assert.Equal("pay-1", (await host.Database.Ledger.GetActiveAsync(host.Order.Id))!.PaymentId);
+    }
+
+    [Fact]
+    public async Task LinkedPaymentWithoutMoneyIsAcknowledgedWithoutAnyChange()
+    {
+        var host = new CoordinatorHost(); await host.Initialize(); await host.Start();
+        host.Gateway.LinkedPaymentId = "pay-late-2"; host.Gateway.LinkedStatus = "PROCESSING";
+        await Deliver(host, "late-pending-" + host.Order.Id, new { paymentId = "pay-late-2" });
+        Assert.Equal(PaymentStatus.Pending, (await host.Database.Native.GetAsync(host.Order.Id)).PaymentStatus);
+        Assert.Empty(await host.Database.Notes(host.Order.Id)); ReviewFlagged(host, "pay-late-2", Times.Never());
+    }
+
+    [Fact]
+    public async Task PaymentOfAnotherOrderIsStillRejected()
+    {
+        var host = new CoordinatorHost(); await host.Initialize(); await host.Start();
+        host.Gateway.LinkedPaymentId = "pay-foreign";
+        host.Gateway.LinkedOrderReference = "nop:1:" + Guid.NewGuid().ToString("N");
+        var foreign = await Assert.ThrowsAsync<GatewayFault>(() => Deliver(host, "foreign-" + host.Order.Id, new { paymentId = "pay-foreign" }));
+        Assert.Equal(503, foreign.StatusCode);
+        // The event body cannot bind a payment to an order the authenticated read does not confirm.
+        host.Gateway.LinkedOrderReference = null;
+        var claimed = await Assert.ThrowsAsync<GatewayFault>(() => Deliver(host, "claimed-" + host.Order.Id, new { paymentId = "pay-foreign", orderId = "nop:1:" + Guid.NewGuid().ToString("N") }));
+        Assert.Equal(503, claimed.StatusCode);
+        Assert.Empty(await host.Database.Notes(host.Order.Id)); Assert.Equal(PaymentStatus.Pending, (await host.Database.Native.GetAsync(host.Order.Id)).PaymentStatus);
     }
 }

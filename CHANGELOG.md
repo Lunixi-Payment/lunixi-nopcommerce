@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 — 2026-11-16
+
+- A captured or authorized payment for a cancelled order is no longer a 503 retry loop: the plugin adds an admin-only review note naming the payment, sets the `Lunixi.PaymentReview` order attribute and acknowledges the webhook. The order is never marked paid automatically.
+- A new payment linked to a known order (a late bank transfer accepted after the original payment expired) is verified with an authenticated read against merchant, order, currency and amount. With funds it gets the same idempotent review note and attribute with the new payment ID; without funds the event is acknowledged with no change. Payments of unknown orders are still rejected.
+- Build on `Lunixi.Sdk` 1.3.0 from NuGet.org (was 1.0.1); no plugin API change.
+- Document the 1–3 business day bank transfer waiting period and the review flag.
+
 ## 1.0.2 — 2026-11-01
 
 - Include the canonical money-string migration guide in the standalone merchant ZIP and require it at both artifact and publication gates.

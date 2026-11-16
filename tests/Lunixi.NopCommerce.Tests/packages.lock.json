@@ -53,8 +53,8 @@
       },
       "Lunixi.Sdk": {
         "type": "Transitive",
-        "resolved": "1.0.1",
-        "contentHash": "GTZx6CHL4Khu6y5yCXyVhXnePB11d3raFdPeC8V7oaBZ19dLE4yM+CzRKqPTE04H/Sopu4P9fC1bPVitmXClsg==",
+        "resolved": "1.3.0",
+        "contentHash": "zdwYKX9z26LE2OVzX4+yEl+woA7soDof4XPpxoohFz12gDK4yDMbqqcnxwRNIZTBFNr9XW4++eRbbD+EBeekIQ==",
         "dependencies": {
           "NSec.Cryptography": "25.4.0"
         }
@@ -133,8 +133,8 @@
       "lunixi.nopcommerce.gateway": {
         "type": "Project",
         "dependencies": {
-          "Lunixi.Sdk": "[1.0.1, )",
-          "Nop.Plugin.Payments.Lunixi": "[1.0.2, )"
+          "Lunixi.Sdk": "[1.3.0, )",
+          "Nop.Plugin.Payments.Lunixi": "[1.1.0, )"
         }
       },
       "nop.plugin.payments.lunixi": {

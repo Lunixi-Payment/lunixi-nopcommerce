@@ -138,11 +138,15 @@ public sealed class PaymentCoordinator(PaymentLedger ledger, CredentialProfiles 
         if (attempt.PaymentId is null) throw new PaymentReviewException();
         var profile = await profiles.GetAsync(attempt.ProfileId); var gateway = gateways.Create(profile.Credentials);
         var payment = await gateway.GetPaymentAsync(attempt.PaymentId, cancellationToken);
+        return await Verify(gateway, attempt.Identity, attempt.PaymentId, payment, cancellationToken);
+    }
+    private static async Task<Settlement> Verify(ILunixiGateway gateway, OrderIdentity identity, string paymentId, GatewayReply payment, CancellationToken cancellationToken)
+    {
         if (payment.Data.ValueKind != JsonValueKind.Object) throw new PaymentReviewException();
         JsonElement? split = null;
         if (payment.Data.TryGetProperty("split", out var reference) && reference.ValueKind == JsonValueKind.Object && PaymentEvidence.Text(reference, "splitPaymentId") is { Length: > 0 } splitId)
             split = (await gateway.GetSplitAsync(splitId, cancellationToken)).Envelope;
-        return PaymentEvidence.Evaluate(attempt.Identity, attempt.PaymentId, payment.Envelope, split);
+        return PaymentEvidence.Evaluate(identity, paymentId, payment.Envelope, split);
     }
     public async Task ReconcileAsync(int orderId, CancellationToken cancellationToken, VerifiedDelivery? delivery = null)
     {
@@ -189,9 +193,40 @@ public sealed class PaymentCoordinator(PaymentLedger ledger, CredentialProfiles 
             delivery.Data.TryGetProperty("paymentId", out _) && delivery.Data.TryGetProperty("intentId", out _) && PaymentEvidence.Text(delivery.Data, "paymentId") != PaymentEvidence.Text(delivery.Data, "intentId")) throw new GatewayFault("unmatched_payment", statusCode: 503);
         // Endpoint-secret rotation and signing-key rotation are independent. All endpoint profiles for
         // the same merchant may deliver an event; dedupe and query with the attempt's immutable profile.
-        var attempt = await ledger.FindPaymentAsync(profile.Credentials.MerchantId, paymentId) ?? throw new GatewayFault("unmatched_payment", statusCode: 503);
+        var attempt = await ledger.FindPaymentAsync(profile.Credentials.MerchantId, paymentId);
+        if (attempt is null) { await ReceiveLinkedAsync(profile.Credentials, paymentId, delivery, cancellationToken); return; }
         if ((await ledger.GetActiveAsync(attempt.NativeOrderId))?.Id != attempt.Id) throw new GatewayFault("inactive_attempt", statusCode: 503);
         await ReconcileAsync(attempt.NativeOrderId, cancellationToken, delivery);
+    }
+
+    // An unknown payment id can be a NEW payment the platform bound to a known order (a late bank transfer
+    // accepted after the original payment expired). Only the authenticated read decides which order it
+    // belongs to; the event body is never trusted for that. It is flagged for review and never marks the
+    // order paid; a payment of an order this store does not know remains unmatched.
+    private async Task ReceiveLinkedAsync(GatewayCredentials credentials, string paymentId, VerifiedDelivery delivery, CancellationToken cancellationToken)
+    {
+        if (paymentId.Length > 256) throw new GatewayFault("unmatched_payment", statusCode: 503);
+        var gateway = gateways.Create(credentials);
+        var payment = await gateway.GetPaymentAsync(paymentId, cancellationToken);
+        var reference = PaymentEvidence.Text(payment.Data, "orderId");
+        if (reference is null || PaymentEvidence.Text(payment.Data, "id") != paymentId || PaymentEvidence.Text(payment.Data, "merchantId") != credentials.MerchantId ||
+            PaymentEvidence.Text(delivery.Data, "orderId") is { } claimed && claimed != reference) throw new GatewayFault("unmatched_payment", statusCode: 503);
+        var orderId = await ledger.FindOrderAsync(credentials.MerchantId, reference) ?? throw new GatewayFault("unmatched_payment", statusCode: 503);
+        var attempt = await ledger.GetActiveAsync(orderId) ?? throw new PaymentReviewException();
+        if (await ledger.InboxCompletedAsync(attempt.ProfileId, delivery.Id, delivery.BodyHash)) return;
+        // Same merchant, order reference, currency and amount checks as the order's own payment.
+        var evidence = await Verify(gateway, attempt.Identity, paymentId, payment, cancellationToken);
+        await ledger.WithOrderAsync(orderId, async () =>
+        {
+            var current = await ledger.GetActiveAsync(orderId) ?? throw new PaymentReviewException();
+            if (current.Id != attempt.Id) throw new PaymentReviewException();
+            if (await ledger.InboxCompletedAsync(current.ProfileId, delivery.Id, delivery.BodyHash)) return true;
+            var order = await native.GetAsync(orderId);
+            if (order.PaymentMethodSystemName != "Payments.Lunixi") throw new PaymentReviewException();
+            if (evidence.CapturedMinor > 0 || evidence.State == "authorized") await native.FlagLinkedPaymentAsync(order, paymentId, evidence);
+            await ledger.CompleteInboxAsync(current.ProfileId, delivery.Id, delivery.BodyHash);
+            return true;
+        });
     }
 
     public async Task<NativeMutationResult> MutateAsync(int orderId, string kind, long? requestedMinor, CancellationToken cancellationToken)

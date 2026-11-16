@@ -82,6 +82,9 @@ internal sealed class FakeGateway : ILunixiGateway
     public bool ConflictAlias { get; set; }
     public string? PaymentPageUrl { get; set; } = "https://pay.lunixi.com/payment/separate-hosted-token-12345";
     public long Fee { get; set; }
+    public string? LinkedPaymentId { get; set; }
+    public string LinkedStatus { get; set; } = "CAPTURED";
+    public string? LinkedOrderReference { get; set; }
     public List<string> CreateKeys { get; } = [];
     public List<string> MutationKeys { get; } = [];
     public TaskCompletionSource? MutationGate { get; set; }
@@ -93,19 +96,25 @@ internal sealed class FakeGateway : ILunixiGateway
     }
     public Task<GatewayReply> GetPaymentAsync(string paymentId, CancellationToken cancellationToken)
     {
+        // A linked payment is a separate platform payment for the same merchant order (late bank transfer).
+        if (paymentId == LinkedPaymentId) return Task.FromResult(Payment(paymentId, LinkedStatus, LinkedOrderReference ?? body.GetProperty("orderId").GetString(), 0));
         if (paymentId != "pay-1") throw new GatewayFault(statusCode: 404);
+        return Task.FromResult(Payment("pay-1", Status, body.GetProperty("orderId").GetString(), Refunded));
+    }
+    private GatewayReply Payment(string id, string status, string? orderId, long refunded)
+    {
         var amount = MinorMoney.JsonInteger(body.GetProperty("amount")) + Fee;
-        return Task.FromResult(Reply(new
+        return Reply(new
         {
-            id = "pay-1",
+            id,
             merchantId = MerchantId,
-            orderId = body.GetProperty("orderId").GetString(),
+            orderId,
             currency = body.GetProperty("currency").GetString(),
             amount = amount.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            status = Status,
+            status,
             metadata = body.GetProperty("metadata"),
-            details = new { capturedAmount = (Status is "AUTHORIZED" or "VOIDED" or "EXPIRED" or "FAILED" ? 0 : amount).ToString(System.Globalization.CultureInfo.InvariantCulture), refundedAmount = Refunded.ToString(System.Globalization.CultureInfo.InvariantCulture) }
-        }));
+            details = new { capturedAmount = (status is "AUTHORIZED" or "VOIDED" or "EXPIRED" or "FAILED" or "PROCESSING" ? 0 : amount).ToString(System.Globalization.CultureInfo.InvariantCulture), refundedAmount = refunded.ToString(System.Globalization.CultureInfo.InvariantCulture) }
+        });
     }
     public Task<GatewayReply> GetSplitAsync(string splitId, CancellationToken cancellationToken) => throw new GatewayFault("not_configured");
     public async Task<GatewayReply> MutateAsync(string paymentId, string operation, string? amount, string key, CancellationToken cancellationToken)
